@@ -5,6 +5,9 @@ import { Draw, DragBox } from "ol/interaction";
 import { Vector as VectorSource } from "ol/source";
 import { Vector as VectorLayer } from "ol/layer";
 import { Style, Stroke, Circle, Fill } from "ol/style";
+import Feature from "ol/Feature";
+import Point from "ol/geom/Point";
+import LineString from "ol/geom/LineString";
 import { getLength } from "ol/sphere";
 import GeoJSON from "ol/format/GeoJSON";
 import { toLonLat } from "ol/proj";
@@ -17,6 +20,10 @@ const Tools = () => {
 
   // Capa auxiliar para dibujos
   const [vectorSource] = useState(new VectorSource());
+  const [measureMode, setMeasureMode] = useState(null); // 'free' | 'between'
+  const [measuring, setMeasuring] = useState(false);
+  const drawRef = React.useRef(null);
+  const betweenPointsRef = React.useRef([]);
 
   useEffect(() => {
     if (!map) return;
@@ -43,16 +50,79 @@ const Tools = () => {
     setMeasureVal(null);
   };
 
-  // --- MEDIR ---
-  const activateMeasure = () => {
-    clearInteractions();
-    setActiveTool("measure");
+  const startMeasureFree = () => {
+    if (!map) return;
+    setMeasuring(true);
+    setMeasureMode("free");
     const draw = new Draw({ source: vectorSource, type: "LineString" });
+    draw.on("drawstart", () => {
+      // al iniciar, limpiamos valor temporal
+      setMeasureVal(null);
+      drawRef.current = draw;
+    });
     draw.on("drawend", (evt) => {
       const length = getLength(evt.feature.getGeometry());
-      setMeasureVal(`${(length / 1000).toFixed(2)} km`);
+      setMeasureVal(`${(length / 1000).toFixed(3)} km`);
+      // dejamos la feature en el vectorSource para visual
+      drawRef.current = null;
     });
     map.addInteraction(draw);
+    drawRef.current = draw;
+  };
+
+  const stopMeasuring = () => {
+    // Quitar interacción draw y listeners
+    if (!map) return;
+    map.getInteractions().forEach((i) => {
+      if (i instanceof Draw) map.removeInteraction(i);
+    });
+    drawRef.current = null;
+    setMeasuring(false);
+    setMeasureMode(null);
+    setActiveTool(null);
+  };
+
+  // Medición entre dos ubicaciones (clicks)
+  const startMeasureBetween = () => {
+    if (!map) return;
+    clearInteractions();
+    setActiveTool("measure");
+    setMeasureMode("between");
+    setMeasuring(true);
+    betweenPointsRef.current = [];
+
+    const handleClick = (evt) => {
+      const coord = evt.coordinate;
+      betweenPointsRef.current.push(coord);
+      // dibujar punto
+      const point = new Feature({ geometry: new Point(coord) });
+      point.setStyle(
+        new Style({
+          image: new Circle({
+            radius: 6,
+            fill: new Fill({ color: "#ffcc33" }),
+            stroke: new Stroke({ color: "#333", width: 1 }),
+          }),
+        })
+      );
+      vectorSource.addFeature(point);
+
+      if (betweenPointsRef.current.length === 2) {
+        // crear linea y calcular distancia
+        const coords = betweenPointsRef.current.slice(0, 2);
+        const line = new Feature({ geometry: new LineString(coords) });
+        vectorSource.addFeature(line);
+        const dist = getLength(line.getGeometry());
+        setMeasureVal(`${(dist / 1000).toFixed(3)} km`);
+        // dejar de escuchar clicks autom.
+        map.un("singleclick", handleClick);
+        setMeasuring(false);
+        setMeasureMode(null);
+        setActiveTool(null);
+      }
+    };
+
+    map.on("singleclick", handleClick);
   };
 
   // --- CONSULTA PUNTO (WMS) ---
@@ -303,12 +373,28 @@ const Tools = () => {
     <div className="panel tools-panel">
       <h3>Herramientas</h3>
       <div className="tools-buttons">
-        <button
-          onClick={activateMeasure}
-          className={activeTool === "measure" ? "active" : ""}
-        >
-          📏 Medir Distancia
-        </button>
+        <div style={{ display: "flex", gap: 6, flexDirection: "column" }}>
+          <button
+            onClick={() => startMeasureFree()}
+            className={measureMode === "free" ? "active" : ""}
+          >
+            📏 Medir (Libre)
+          </button>
+          <button
+            onClick={() => startMeasureBetween()}
+            className={measureMode === "between" ? "active" : ""}
+          >
+            � Medir entre ubicaciones
+          </button>
+          {measuring && (
+            <button
+              onClick={() => stopMeasuring()}
+              style={{ background: "#ffdddd" }}
+            >
+              ⏹️ Detener medición
+            </button>
+          )}
+        </div>
         <button
           onClick={activatePointInfo}
           className={activeTool === "info-point" ? "active" : ""}

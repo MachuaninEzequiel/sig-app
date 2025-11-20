@@ -21,7 +21,8 @@ body {
 .sidebar {
   position: absolute;
   top: 10px;
-  left: 10px;
+  /* Dejamos espacio a la izquierda para el botón toggle */
+  left: 50px;
   width: 320px;
   max-height: 90vh; /* Evita que se salga de la pantalla */
   background-color: rgba(255, 255, 255, 0.95); /* Fondo casi opaco */
@@ -54,7 +55,8 @@ body {
 .sidebar-toggle {
   position: absolute;
   top: 10px;
-  left: 340px;
+  /* Siempre a la izquierda de la sidebar (fijo) */
+  left: 10px;
   z-index: 30;
   pointer-events: auto;
   background: #ffffffcc;
@@ -71,7 +73,8 @@ body {
 }
 
 .sidebar-toggle.open {
-  left: 330px;
+  /* no mover el botón cuando el sidebar cambia */
+  left: 10px;
 }
 
 .sidebar-toggle:hover {
@@ -300,7 +303,8 @@ button:disabled {
   background: rgba(0, 60, 136, 0.3);
   border-radius: 4px;
   bottom: 8px;
-  left: 8px;
+  right: 8px; /* Mover a la derecha */
+  left: auto;
   padding: 2px;
   position: absolute;
 }
@@ -314,4 +318,19 @@ button:disabled {
   margin: 1px;
   will-change: contents, width;
   transition: all 0.25s;
+}
+
+/* Zoom control abajo a la derecha */
+.ol-zoom {
+  position: absolute !important;
+  right: 8px;
+  bottom: 56px; /* encima de la escala */
+  left: auto !important;
+  top: auto !important;
+}
+
+.ol-zoom button {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
 }
