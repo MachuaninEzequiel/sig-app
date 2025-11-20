@@ -1,114 +1,225 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { MapContext } from "./Map";
-import { Draw } from "ol/interaction";
+import { CONFIG } from "../config";
+import { Draw, DragBox } from "ol/interaction";
 import { Vector as VectorSource } from "ol/source";
 import { Vector as VectorLayer } from "ol/layer";
 import { Style, Stroke, Circle, Fill } from "ol/style";
 import { getLength } from "ol/sphere";
+import { platformModifierKeyOnly } from "ol/events/condition";
+import GeoJSON from "ol/format/GeoJSON";
 
 const Tools = () => {
   const map = useContext(MapContext);
-  const [mode, setMode] = useState(null); // 'measure', 'info', null
-  const [infoData, setInfoData] = useState(null);
+  const [activeTool, setActiveTool] = useState(null);
+  const [results, setResults] = useState(null);
+  const [measureVal, setMeasureVal] = useState(null);
 
-  // Capa vectorial temporal para dibujar medidas
-  const [measureSource] = useState(new VectorSource());
+  // Capa auxiliar para dibujos
+  const [vectorSource] = useState(new VectorSource());
 
-  // Inicializar capa de dibujo una sola vez
-  React.useEffect(() => {
+  useEffect(() => {
     if (!map) return;
-    const vector = new VectorLayer({
-      source: measureSource,
+    const vectorLayer = new VectorLayer({
+      source: vectorSource,
       style: new Style({
-        stroke: new Stroke({ color: "#ffcc33", width: 2 }),
+        stroke: new Stroke({ color: "#ffcc33", width: 3 }),
         image: new Circle({ radius: 7, fill: new Fill({ color: "#ffcc33" }) }),
+        fill: new Fill({ color: "rgba(255, 255, 0, 0.1)" }),
       }),
       zIndex: 999,
     });
-    map.addLayer(vector);
-  }, [map]);
+    map.addLayer(vectorLayer);
+    return () => map.removeLayer(vectorLayer);
+  }, [map, vectorSource]);
 
-  // Lógica de Consulta
-  const handleInfo = async (evt) => {
-    if (mode !== "info") return;
-
-    const viewRes = map.getView().getResolution();
-    // Buscar en la capa visible más alta
-    const targetLayer = map
-      .getLayers()
-      .getArray()
-      .filter((l) => l.getVisible() && l.get("name"))
-      .pop(); // La última (más arriba)
-
-    if (!targetLayer) return;
-
-    const url = targetLayer
-      .getSource()
-      .getGetFeatureInfoUrl(evt.coordinate, viewRes, "EPSG:3857", {
-        INFO_FORMAT: "application/json",
-      });
-
-    if (url) {
-      const resp = await fetch(url);
-      const data = await resp.json();
-      if (data.features.length > 0) {
-        setInfoData(data.features[0].properties);
-      } else {
-        setInfoData({ Mensaje: "No se encontraron datos" });
-      }
-    }
+  const clearInteractions = () => {
+    if (!map) return;
+    map.getInteractions().forEach((i) => {
+      if (i instanceof Draw || i instanceof DragBox) map.removeInteraction(i);
+    });
+    vectorSource.clear();
+    setResults(null);
+    setMeasureVal(null);
   };
 
-  React.useEffect(() => {
-    if (!map) return;
-    if (mode === "info") map.on("singleclick", handleInfo);
-    return () => map.un("singleclick", handleInfo);
-  }, [map, mode]);
-
-  // Lógica de Medición
-  const startMeasure = () => {
-    measureSource.clear();
-    setMode("measure");
-    setInfoData(null);
-
-    // Remover interacciones previas
-    map.getInteractions().forEach((i) => {
-      if (i instanceof Draw) map.removeInteraction(i);
-    });
-
-    const draw = new Draw({ source: measureSource, type: "LineString" });
+  // --- MEDIR ---
+  const activateMeasure = () => {
+    clearInteractions();
+    setActiveTool("measure");
+    const draw = new Draw({ source: vectorSource, type: "LineString" });
     draw.on("drawend", (evt) => {
-      const len = getLength(evt.feature.getGeometry());
-      alert(`Distancia: ${(len / 1000).toFixed(2)} km`);
-      setMode(null);
-      map.removeInteraction(draw);
+      const length = getLength(evt.feature.getGeometry());
+      setMeasureVal(`${(length / 1000).toFixed(2)} km`);
     });
     map.addInteraction(draw);
   };
 
+  // --- CONSULTA PUNTO (WMS) ---
+  const activatePointInfo = () => {
+    clearInteractions();
+    setActiveTool("info-point");
+  };
+
+  // --- CONSULTA CAJA (WFS) ---
+  const activateBoxInfo = () => {
+    clearInteractions();
+    setActiveTool("info-box");
+    const box = new DragBox(); // DragBox estándar
+    box.on("boxend", () => queryWFSByBox(box.getGeometry().getExtent()));
+    map.addInteraction(box);
+  };
+
+  // Manejador de click para WMS
+  useEffect(() => {
+    if (!map || activeTool !== "info-point") return;
+
+    const handleMapClick = async (evt) => {
+      const viewRes = map.getView().getResolution();
+      const visibleLayers = map
+        .getLayers()
+        .getArray()
+        .filter((l) => l.getVisible() && l.get("name"));
+
+      if (visibleLayers.length === 0) {
+        setResults([
+          {
+            layer: "Info",
+            properties: { msg: "Active una capa para consultar" },
+          },
+        ]);
+        return;
+      }
+
+      const topLayer = visibleLayers[visibleLayers.length - 1];
+      const url = topLayer
+        .getSource()
+        .getGetFeatureInfoUrl(evt.coordinate, viewRes, "EPSG:3857", {
+          INFO_FORMAT: "application/json",
+        });
+
+      if (url) {
+        try {
+          const resp = await fetch(url);
+          const data = await resp.json();
+          if (data.features.length > 0) {
+            setResults(
+              data.features.map((f) => ({
+                layer: topLayer.get("title"),
+                properties: f.properties,
+              }))
+            );
+          } else {
+            setResults([]);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    };
+
+    map.on("singleclick", handleMapClick);
+    return () => map.un("singleclick", handleMapClick);
+  }, [map, activeTool]);
+
+  // Función consulta WFS BBOX
+  const queryWFSByBox = async (extent) => {
+    const visibleLayers = map
+      .getLayers()
+      .getArray()
+      .filter((l) => l.getVisible() && l.get("name"));
+    if (visibleLayers.length === 0) return;
+
+    const targetLayer = visibleLayers[visibleLayers.length - 1];
+    const url = `${CONFIG.geoserverUrl}/${
+      CONFIG.workspace
+    }/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${
+      CONFIG.workspace
+    }:${targetLayer.get(
+      "name"
+    )}&maxFeatures=50&outputFormat=application/json&bbox=${extent.join(
+      ","
+    )},EPSG:3857`;
+
+    try {
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data.features && data.features.length > 0) {
+        setResults(
+          data.features.map((f) => ({
+            layer: targetLayer.get("title"),
+            properties: f.properties,
+          }))
+        );
+        // Feedback visual
+        vectorSource.addFeatures(new GeoJSON().readFeatures(data));
+      } else {
+        setResults([]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
-    <div className="panel">
+    <div className="panel tools-panel">
       <h3>Herramientas</h3>
-      <div className="btn-group">
+      <div className="tools-buttons">
         <button
-          onClick={() => setMode("info")}
-          className={mode === "info" ? "active" : ""}
+          onClick={activateMeasure}
+          className={activeTool === "measure" ? "active" : ""}
         >
-          🔍 Consultar
+          📏 Medir Distancia
         </button>
         <button
-          onClick={startMeasure}
-          className={mode === "measure" ? "active" : ""}
+          onClick={activatePointInfo}
+          className={activeTool === "info-point" ? "active" : ""}
         >
-          📏 Medir
+          📍 Consulta (Punto)
+        </button>
+        <button
+          onClick={activateBoxInfo}
+          className={activeTool === "info-box" ? "active" : ""}
+        >
+          ⬜ Consulta (Caja)
+        </button>
+        <button
+          onClick={() => {
+            clearInteractions();
+            setActiveTool(null);
+          }}
+        >
+          ❌ Limpiar
         </button>
       </div>
 
-      {infoData && (
-        <div className="info-box">
-          <h4>Resultado:</h4>
-          <pre>{JSON.stringify(infoData, null, 2)}</pre>
-          <button onClick={() => setInfoData(null)}>Cerrar</button>
+      {measureVal && (
+        <div className="result-box measure-result">
+          <strong>Distancia:</strong> {measureVal}
+        </div>
+      )}
+
+      {results && (
+        <div className="result-box info-result">
+          <h4>Resultados ({results.length})</h4>
+          {results.length === 0 ? (
+            <p>Sin datos.</p>
+          ) : (
+            <div className="results-list">
+              {results.map((res, idx) => (
+                <div key={idx} className="result-item">
+                  <strong>{res.layer}</strong>
+                  <ul>
+                    {Object.entries(res.properties).map(([key, val]) => (
+                      <li key={key}>
+                        <b>{key}:</b> {val}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

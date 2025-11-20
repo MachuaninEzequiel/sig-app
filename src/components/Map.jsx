@@ -1,4 +1,3 @@
-// src/components/Map.jsx
 import React, { useEffect, useState } from "react";
 import "ol/ol.css";
 import Map from "ol/Map";
@@ -6,17 +5,17 @@ import View from "ol/View";
 import { Tile as TileLayer, Image as ImageLayer } from "ol/layer";
 import { OSM, ImageWMS } from "ol/source";
 import { fromLonLat } from "ol/proj";
-import { ScaleLine } from "ol/control";
+import { ScaleLine, Zoom } from "ol/control"; // Importamos ScaleLine
 import { CONFIG } from "../config";
 
-// Contexto para compartir el mapa con los controles
+// Exportamos el contexto para usarlo en los hijos
 export const MapContext = React.createContext();
 
 const MapWrapper = ({ children }) => {
   const [map, setMap] = useState(null);
 
   useEffect(() => {
-    // 1. Capas WMS iniciales
+    // 1. Configurar Capas WMS desde config.js
     const wmsLayers = CONFIG.layers.map(
       (l) =>
         new ImageLayer({
@@ -26,25 +25,35 @@ const MapWrapper = ({ children }) => {
             serverType: "geoserver",
           }),
           visible: l.visible,
-          properties: { ...l }, // Guardar metadata (nombre, título) en la capa
+          // Guardamos metadata importante en la capa
+          properties: {
+            title: l.title,
+            name: l.name,
+            category: l.category,
+          },
         })
     );
 
-    // 2. Inicializar Mapa
+    // 2. Inicializar el objeto Mapa
     const mapObject = new Map({
       target: "map-container",
       layers: [
-        new TileLayer({ source: new OSM() }), // Capa base
+        new TileLayer({ source: new OSM() }), // Capa Base
         ...wmsLayers,
       ],
       view: new View({
         center: fromLonLat(CONFIG.center),
         zoom: CONFIG.zoom,
       }),
-      controls: [], // Limpios
+      controls: [], // Limpiamos controles por defecto para personalizar
     });
 
-    mapObject.addControl(new ScaleLine());
+    // 3. AGREGAR CONTROLES (Zoom y ESCALA)
+    mapObject.addControl(new Zoom());
+    mapObject.addControl(
+      new ScaleLine({ units: "metric", bar: true, text: true, minWidth: 140 })
+    );
+
     setMap(mapObject);
 
     return () => mapObject.setTarget(null);
@@ -61,7 +70,7 @@ const MapWrapper = ({ children }) => {
           zIndex: 0,
         }}
       ></div>
-      {/* Renderizamos los controles (hijos) solo cuando el mapa existe */}
+      {/* Renderizamos la interfaz sobre el mapa solo cuando esté listo */}
       {map && <div className="ui-overlay">{children}</div>}
     </MapContext.Provider>
   );

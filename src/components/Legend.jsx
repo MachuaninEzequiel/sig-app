@@ -6,40 +6,43 @@ const Legend = () => {
   const map = useContext(MapContext);
   const [visibleLayers, setVisibleLayers] = useState([]);
 
-  // Actualizar leyenda cada vez que el usuario interactúa con el mapa (simple hack)
   useEffect(() => {
     if (!map) return;
 
-    const update = () => {
+    const updateLegends = () => {
       const active = map
         .getLayers()
         .getArray()
         .filter((l) => l.get("title") && l.getVisible());
-      setVisibleLayers([...active]);
+      // Revertir para mostrar orden visual correcto (capa superior arriba)
+      setVisibleLayers([...active].reverse());
     };
 
-    // Escuchar cambios de visibilidad (click en el mapa sirve de trigger generico)
-    map.on("click", update);
-    // También un intervalo para detectar cambios desde el LayerControl
-    const interval = setInterval(update, 500);
+    updateLegends();
 
-    return () => clearInterval(interval);
+    // Detectar cambios en el mapa (paneo, zoom, cambio de capas)
+    const key = map.on("rendercomplete", updateLegends);
+    return () => map.un("rendercomplete", key);
   }, [map]);
 
+  if (visibleLayers.length === 0) return null;
+
   return (
-    <div className="panel">
+    <div className="panel legend-panel">
       <h3>Simbología</h3>
-      {visibleLayers.map((l, i) => {
-        const name = l.get("name");
-        const src = `${CONFIG.geoserverUrl}/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=${CONFIG.workspace}:${name}`;
-        return (
-          <div key={i} style={{ marginBottom: "10px" }}>
-            <small>{l.get("title")}</small>
-            <br />
-            <img src={src} alt="Legend" />
-          </div>
-        );
-      })}
+      <div className="legend-content">
+        {visibleLayers.map((l, i) => {
+          const name = l.get("name");
+          const legendUrl = `${CONFIG.geoserverUrl}/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=${CONFIG.workspace}:${name}`;
+
+          return (
+            <div key={i} className="legend-item">
+              <span className="legend-title">{l.get("title")}</span>
+              <img src={legendUrl} alt={l.get("title")} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

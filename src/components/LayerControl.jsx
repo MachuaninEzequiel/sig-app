@@ -6,10 +6,8 @@ const LayerControl = () => {
   const [layers, setLayers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 1. Cargar capas al inicio
   useEffect(() => {
     if (!map) return;
-    // Obtenemos todas las capas que definimos en config (tienen propiedad 'title')
     const logicLayers = map
       .getLayers()
       .getArray()
@@ -19,17 +17,14 @@ const LayerControl = () => {
 
   const toggle = (layer) => {
     layer.setVisible(!layer.getVisible());
-    setLayers([...layers]); // Forzar re-render
+    setLayers([...layers]);
   };
 
-  // 2. Agrupar capas por categoría (Memorizado para no recalcular en cada render)
+  // Agrupar por categoría
   const groupedLayers = useMemo(() => {
     const groups = {};
     layers.forEach((layer) => {
-      // Si escribimos en el buscador, ignoramos las categorías
       if (searchTerm !== "") return;
-
-      // Obtener categoría o usar "Sin Categoría" por defecto
       const cat = layer.get("category") || "Otras";
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(layer);
@@ -37,7 +32,6 @@ const LayerControl = () => {
     return groups;
   }, [layers, searchTerm]);
 
-  // 3. Filtrar capas cuando se usa el buscador
   const filteredLayers = layers.filter((layer) =>
     layer.get("title").toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -47,8 +41,6 @@ const LayerControl = () => {
   return (
     <div className="panel layer-control-panel">
       <h3>Capas ({layers.length})</h3>
-
-      {/* BUSCADOR */}
       <input
         type="text"
         placeholder="Buscar capa..."
@@ -58,7 +50,6 @@ const LayerControl = () => {
       />
 
       <div className="layer-list-container">
-        {/* MODO BÚSQUEDA ACTIVO */}
         {searchTerm !== "" ? (
           <div className="search-results">
             {filteredLayers.length > 0 ? (
@@ -72,7 +63,6 @@ const LayerControl = () => {
             )}
           </div>
         ) : (
-          /* MODO CATEGORÍAS (ACORDEÓN) */
           Object.entries(groupedLayers).map(([category, groupLayers]) => (
             <details key={category} open={false}>
               <summary>
@@ -91,7 +81,6 @@ const LayerControl = () => {
   );
 };
 
-// Componente pequeño para cada item (checkbox)
 const LayerItem = ({ layer, toggle }) => (
   <div className="layer-item">
     <label>

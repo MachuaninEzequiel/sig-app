@@ -1,36 +1,49 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { MapContext } from "./Map";
 import { CONFIG } from "../config";
 import { Draw } from "ol/interaction";
 import { Vector as VectorSource } from "ol/source";
 import { Vector as VectorLayer } from "ol/layer";
+import { Style, Circle, Fill, Stroke } from "ol/style";
 import WFS from "ol/format/WFS";
 
 const Editor = () => {
   const map = useContext(MapContext);
-  const [drawing, setDrawing] = useState(false);
-  const [tempSource] = useState(new VectorSource());
+  const [isEditing, setIsEditing] = useState(false);
+  const [editSource] = useState(new VectorSource());
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!map) return;
-    const layer = new VectorLayer({ source: tempSource, zIndex: 1000 });
-    map.addLayer(layer);
-  }, [map]);
+    const editLayer = new VectorLayer({
+      source: editSource,
+      style: new Style({
+        image: new Circle({
+          radius: 8,
+          fill: new Fill({ color: "#ff0000" }),
+          stroke: new Stroke({ color: "#fff", width: 2 }),
+        }),
+      }),
+      zIndex: 1000,
+    });
+    map.addLayer(editLayer);
+    return () => map.removeLayer(editLayer);
+  }, [map, editSource]);
 
-  const addPoint = () => {
-    setDrawing(true);
-    const draw = new Draw({ source: tempSource, type: "Point" });
+  const startEditing = () => {
+    if (!map) return;
+    setIsEditing(true);
+    const draw = new Draw({ source: editSource, type: "Point" });
 
     draw.on("drawend", async (evt) => {
       const feature = evt.feature;
-      const name = prompt("Ingrese un nombre para el punto:");
+      map.removeInteraction(draw);
 
-      if (name) {
-        // Configurar atributos para GeoServer
-        feature.set("nombre", name); // Ajusta 'nombre' a tu columna real
+      const nombre = prompt("Nombre del nuevo elemento:");
+
+      if (nombre) {
+        feature.set("nombre", nombre); // Asegúrate de que esta columna exista
         feature.setGeometryName(CONFIG.editLayer.geomField);
 
-        // Crear Transacción WFS
         const formatWFS = new WFS();
         const node = formatWFS.writeTransaction([feature], null, null, {
           featureType: CONFIG.editLayer.name,
@@ -41,7 +54,7 @@ const Editor = () => {
         const payload = new XMLSerializer().serializeToString(node);
 
         try {
-          const res = await fetch(
+          const response = await fetch(
             `${CONFIG.geoserverUrl}/${CONFIG.workspace}/wfs`,
             {
               method: "POST",
@@ -49,27 +62,30 @@ const Editor = () => {
               headers: { "Content-Type": "text/xml" },
             }
           );
-          if (res.ok) alert("Guardado exitosamente!");
-          else alert("Error al guardar. Revise consola.");
-        } catch (err) {
-          console.error(err);
-          alert("Error de conexión (CORS?).");
+          if (response.ok) alert("✅ Guardado exitosamente.");
+          else alert("❌ Error al guardar.");
+        } catch (error) {
+          console.error(error);
+          alert("❌ Error de conexión.");
         }
       }
 
-      map.removeInteraction(draw);
-      tempSource.clear();
-      setDrawing(false);
+      editSource.clear();
+      setIsEditing(false);
     });
 
     map.addInteraction(draw);
   };
 
   return (
-    <div className="panel highlight">
+    <div className="panel editor-panel highlight-panel">
       <h3>Edición</h3>
-      <button onClick={addPoint} disabled={drawing}>
-        {drawing ? "Click en mapa..." : "➕ Nuevo Punto"}
+      <button
+        onClick={startEditing}
+        disabled={isEditing}
+        style={{ width: "100%", padding: "10px" }}
+      >
+        {isEditing ? "Click en el mapa..." : "➕ Nuevo Punto"}
       </button>
     </div>
   );
