@@ -1,6 +1,6 @@
 // src/config.js
 export const CONFIG = {
-  geoserverUrl: "http://localhost:8080/geoserver",
+  geoserverUrl: "/geoserver", // ← Usa ruta relativa (proxy de Vite lo redirigirá)
   workspace: "tpigis",
   center: [-60.0, -27.0],
   zoom: 7,
