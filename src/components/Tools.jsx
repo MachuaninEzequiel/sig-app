@@ -370,10 +370,10 @@ const Tools = () => {
   };
 
   return (
-    <div className="panel tools-panel">
-      <h3>Herramientas</h3>
+    <div className=" tools-panel">
+      
       <div className="tools-buttons">
-        <div style={{ display: "flex", gap: 6, flexDirection: "column" }}>
+        <div style={{ display: "flex", gap: 6, flexDirection: "row" }}>
           <button
             onClick={() => startMeasureFree()}
             className={measureMode === "free" ? "active" : ""}
@@ -394,7 +394,7 @@ const Tools = () => {
               ⏹️ Detener medición
             </button>
           )}
-        </div>
+        
         <button
           onClick={activatePointInfo}
           className={activeTool === "info-point" ? "active" : ""}
@@ -415,6 +415,7 @@ const Tools = () => {
         >
           ❌ Limpiar
         </button>
+        </div>
       </div>
 
       {measureVal && (
