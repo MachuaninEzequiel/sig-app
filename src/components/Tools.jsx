@@ -373,7 +373,7 @@ const Tools = () => {
     <div className=" tools-panel">
       
       <div className="tools-buttons">
-        <div style={{ display: "flex", gap: 6, flexDirection: "row" }}>
+        
           <button
             onClick={() => startMeasureFree()}
             className={measureMode === "free" ? "active" : ""}
@@ -415,7 +415,7 @@ const Tools = () => {
         >
           ❌ Limpiar
         </button>
-        </div>
+     
       </div>
 
       {measureVal && (
