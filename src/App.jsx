@@ -9,14 +9,29 @@ import Nav from "./nav";
 
 function App() {
   
-
+  const stopPropagation = (e) => {
+    e.stopPropagation();
+    // e.nativeEvent.stopImmediatePropagation(); // Usar si el anterior no basta
+  };
   return (
     <MapWrapper>
 
 
 
+    <div 
+        className="nav-container-fix"
+        onMouseDown={stopPropagation}
+        onClick={stopPropagation}
+        onDoubleClick={stopPropagation}
+        onWheel={stopPropagation}
 
+        >
+        
       <Nav/>
+    </div>
+      <div className="leyenda">
+        {/* <Legend/> */}
+      </div>
 
     </MapWrapper>
   );
