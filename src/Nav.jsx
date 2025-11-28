@@ -4,6 +4,9 @@ import LayerControl from "./components/LayerControl";
 import { useState } from "react";
 import "./App.css"
 import Tools from "./components/Tools";
+import Legend from "./components/Legend";
+import Editor from "./components/Editor"
+
 
 
 function Nav() {
@@ -19,24 +22,22 @@ const [sidebarOpen, setSidebarOpen] = useState(true);
         >
                 {sidebarOpen ? "X" : "≡" }
         </button>
-        <h2 className="nav-title">GIS TIP 2025</h2>
+        <h2 className="nav-title">GIS TPI 2025</h2>
 
         <div className="tools-buttons-row">
             
             <Tools />
         </div>
+        <div className="leyersidebar">
+            <div className={`sidebar ${sidebarOpen ? "visible" : "hidden"}`}>
 
-        <div className={`sidebar ${sidebarOpen ? "visible" : "hidden"}`}>
+                    <LayerControl />
+                    {/* <Legend/>
+                    <Editor /> */}
         
-
-        
-            <div className="sidebar-content">
-                <LayerControl />
-                {/*  */}
-                {/* <Legend />
-                <Editor /> */}
             </div>
         </div>
+        
     </div>
     )
 }
