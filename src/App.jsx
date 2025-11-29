@@ -13,6 +13,9 @@ function App() {
     e.stopPropagation();
     // e.nativeEvent.stopImmediatePropagation(); // Usar si el anterior no basta
   };
+
+  const [leyendaBtn,setLeyendaBtn] = useState(true)
+
   return (
     <MapWrapper>
 
@@ -29,9 +32,20 @@ function App() {
         
       <Nav/>
     </div>
+
+    <div className="leyenda-container">
       <div className="leyenda">
-        {/* <Legend/> */}
+        <Legend/>
+        <button
+        className={`sidebar-toggle ${leyendaBtn ? "open" : ""}`}
+            onClick={() => setLeyendaBtn(!leyendaBtn)}
+            title={leyendaBtn ? "Ocultar menú" : "Mostrar menú"}
+        >
+                {leyendaBtn ? "X" : "+" }
+        </button>
       </div>
+    </div>
+      
 
     </MapWrapper>
   );
