@@ -28,7 +28,7 @@ const Legend = () => {
   if (visibleLayers.length === 0) return null;
 
   return (
-    <div className="panel-leyenda legend-panel">
+    <div className="panel legend-panel">
       <h3>Simbología</h3>
       <div className="legend-content">
         {visibleLayers.map((l, i) => {
