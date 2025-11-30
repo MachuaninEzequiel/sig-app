@@ -1,4 +1,3 @@
-/* --- ESTILOS BASE --- */
 body {
   margin: 0;
   padding: 0;
@@ -6,7 +5,6 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* --- CONTENEDOR DE UI (Flota sobre el mapa) --- */
 .ui-overlay {
   position: absolute;
   top: 0;
@@ -17,7 +15,6 @@ body {
   z-index: 10;
 }
 
-/* --- BARRA LATERAL --- */
 .sidebar {
   position: absolute;
   top: 4.8rem;
@@ -35,7 +32,6 @@ body {
   transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
-/* Estados para mostrar/ocultar la barra */
 .sidebar.hidden {
   transform: translateX(60px);
   opacity: 0;
@@ -47,23 +43,17 @@ body {
   pointer-events: auto;
 }
 
-
-
 .leyenda {
   position: absolute;
   bottom: 0.6rem;    
   right: 1.7rem;     
   width: 320px;
   z-index: 2000;
-  
-  
-  
   pointer-events: none; 
   display: flex;
   flex-direction: column;
   justify-content: flex-end; 
 }
-
 
 .panel-leyenda {
   background: #f3eeee;
@@ -71,24 +61,17 @@ body {
   border-radius: 6px;
   padding: 10px;
   position: relative; 
-  
-  
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease;
   overflow: hidden;
   pointer-events: auto; 
-  
-  
   max-height: 20rem; 
   opacity: 1;
   animation: slideUpFade 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)
 }
 
-
 .panel-leyenda.collapsed {
   max-height: 1.3rem; 
-  
 }
-
 
 .panel-leyenda.collapsed .legend-content {
   opacity: 0;
@@ -96,14 +79,12 @@ body {
   transition: opacity 0.2s ease;
 }
 
-
 .leyend-toggle {
   position: absolute;
   right: 10px;
   top: 10px; 
   z-index: 30001;
   pointer-events: auto;
-  
   font-size: 1rem;
   line-height: 1;
   background-color: #6da4b4cc;
@@ -121,7 +102,6 @@ body {
 }
 
 .leyend-toggle.open {
-  
   font-size: 0.8rem;
   background-color: rgb(206, 97, 97);
   color: white;
@@ -131,10 +111,10 @@ body {
   transform: scale(1.1);
   border: 2px solid black;
 }
+
 .leyend-toggle.open:hover {
   background-color: rgb(230, 39, 39);
 }
-
 
 .panel-leyenda h3 {
   text-align: center;
@@ -147,9 +127,7 @@ body {
   padding-bottom: 10px;
   border-bottom: 1px solid gray;
   padding-right: 25px; 
-  
 }
-
 
 .legend-content {
   overflow-y: auto;
@@ -157,7 +135,6 @@ body {
   opacity: 1;
   transition: opacity 0.3s ease 0.1s; 
 }
-
 
 .legend-item {
   display: flex;
@@ -178,15 +155,13 @@ body {
 @keyframes slideUpFade {
   from {
     opacity: 0;
-    transform: translateY(100%); /* Empieza más abajo (escondido) */
+    transform: translateY(100%); 
   }
   to {
     opacity: 1;
-    transform: translateY(0); /* Termina en su posición original */
+    transform: translateY(0); 
   }
 }
-
-
 
 .sidebar-toggle {
   position: absolute;
@@ -225,12 +200,12 @@ body {
   background-color: rgb(230, 39, 39);
   border: 2px solid black;
 }
+
 .sidebar-toggle:hover {
   transform: scale(1.02);
   background: #71b3c7cc;
   border: 2px solid black;
 }
-
 
 .sidebar h2.title {
   margin-top: 0;
@@ -241,7 +216,6 @@ body {
   margin-bottom: 15px;
 }
 
-
 .tools-panel {
   display: flex;
   width: 100%;
@@ -249,6 +223,7 @@ body {
   background: #f3eeee;
   z-index: 222222;
 }
+
 .panel {
   background: #f3eeee;
   border: 1px solid #e0e0e0;
@@ -268,9 +243,6 @@ body {
   text-decoration: underline;
   border-bottom: 1px solid gray;
 }
-
-
-
 
 .layer-control-panel {
   max-height: 52vh;
@@ -298,8 +270,6 @@ details {
   border: 1px solid #110e0e;
   width: 100%;
   border-radius: 4px;
-  
-  
 }
 
 summary {
@@ -313,7 +283,6 @@ summary {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
 }
 
 summary:hover {
@@ -326,16 +295,12 @@ summary:hover {
   font-size: 0.75rem;
   padding: 2px 8px;
   border-radius: 10px;
-  
 }
 
 .group-content {
   border-top: 1px solid black;
   padding: 8px;
   background: rgb(245, 244, 244);
-  
-  
-  
 }
 
 .layer-item label {
@@ -344,14 +309,12 @@ summary:hover {
   cursor: pointer;
   font-size: 0.9rem;
   margin-bottom: 4px;
-  
 }
 
 .layer-item input {
   margin-right: 8px;
   transform: scale(1.1);
 }
-
 
 .tools-buttons {
   display: flex;
@@ -390,7 +353,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-
 .result-box {
   position: absolute;
   top: 25rem;
@@ -426,7 +388,6 @@ button:disabled {
   margin: 5px 0;
 }
 
-
 .highlight-panel {
   border-left: 4px solid #ff5722;
   background-color: #fff3e0;
@@ -449,13 +410,10 @@ button:disabled {
   color: #fff;
 }
 
-/* OPENLAYERS*/
-
 .ol-dragbox {
   background-color: rgba(255, 255, 255, 0.4);
   border: 2px solid #007bff;
 }
-
 
 .ol-scale-line {
   background: rgba(0, 60, 136, 0.3);
@@ -477,7 +435,6 @@ button:disabled {
   will-change: contents, width;
   transition: all 0.25s;
 }
-
 
 .ol-zoom {
   position: absolute !important;
@@ -512,11 +469,9 @@ button:disabled {
   }
 }
 
-
 details[open] .group-content {
   animation: accordionSlide 0.3s ease-out forwards;
 }
-
 
 .layer-item {
   transition: background-color 0.2s, padding-left 0.2s;
@@ -527,29 +482,21 @@ details[open] .group-content {
   padding-left: 5px; 
   border-radius: 4px;
 }
+
 .btn-clean-layers {
-  
   width: 99%; 
   padding: 8px;
   margin-bottom: 10px;
-  
-  
-  background-color: #ffecec;  
+  background-color: #ffecec;    
   border: 1px solid #0e0d0d; 
   border-radius: 4px;
-  
-  
   color: #333;
   font-size: 0.9rem;
   font-weight: 600; 
-  
   cursor: pointer;
   transition: all 0.2s ease;
-  
-  
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-
 
 .btn-clean-layers:hover {
   background-color: #fad4d4; 
@@ -557,12 +504,10 @@ details[open] .group-content {
   color: #d63031;            
 }
 
-
 .btn-clean-layers:active {
   background-color: #ffdcdc;
   transform: translateY(1px); 
 }
-
 
 .btn-clean-layers:disabled {
   background-color: #e9ecef;
@@ -571,4 +516,65 @@ details[open] .group-content {
   cursor: default;
   box-shadow: none;
   pointer-events: none; 
+}
+
+.tools-pill-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px; 
+  background-color: #ffffff; 
+  padding: 4px 8px;          
+  border-radius: 8px;        
+  border: 1px solid #dcdcdc; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  width: auto;
+  margin: 0 auto; 
+}
+
+button.tool-pill-btn {
+  background: transparent; 
+  border: none;
+  cursor: pointer;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  font-size: 1rem;
+  color: #444;
+  font-weight: 500;
+  border-radius: 4px; 
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: auto !important;
+  height: auto !important;
+  line-height: normal;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button.tool-pill-btn:hover {
+  background-color: #f1f3f4; 
+  color: #000;
+}
+
+button.tool-pill-btn.active {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+.tool-pill-separator {
+  width: 1px;
+  height: 20px;
+  background-color: #dadce0;
+  margin: 0 4px;
+}
+
+button.tool-pill-btn.btn-pill-clear {
+  color: #d93025; 
+  margin-left: 5px;
+  border-left: 1px solid #f1f3f4; 
+  padding-left: 12px;
+}
+
+button.tool-pill-btn.btn-pill-clear:hover {
+  background-color: #fce8e6; 
 }
