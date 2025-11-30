@@ -108,13 +108,13 @@ const Tools = () => {
       vectorSource.addFeature(point);
 
       if (betweenPointsRef.current.length === 2) {
-        // crear linea y calcular distancia
+        
         const coords = betweenPointsRef.current.slice(0, 2);
         const line = new Feature({ geometry: new LineString(coords) });
         vectorSource.addFeature(line);
         const dist = getLength(line.getGeometry());
         setMeasureVal(`${(dist / 1000).toFixed(3)} km`);
-        // dejar de escuchar clicks autom.
+        
         map.un("singleclick", handleClick);
         setMeasuring(false);
         setMeasureMode(null);
