@@ -33,20 +33,12 @@ function App() {
       <Nav/>
     </div>
 
-    <div className="leyenda-container">
-      <div className="leyenda">
-        <Legend/>
-        <button
-        className={`sidebar-toggle ${leyendaBtn ? "open" : ""}`}
-            onClick={() => setLeyendaBtn(!leyendaBtn)}
-            title={leyendaBtn ? "Ocultar menú" : "Mostrar menú"}
-        >
-                {leyendaBtn ? "X" : "+" }
-        </button>
-      </div>
+    <div className="leyenda">
+        <Legend leyendaBtn={leyendaBtn} setLeyendaBtn={setLeyendaBtn}/>
+
+      
     </div>
       
-
     </MapWrapper>
   );
 }
