@@ -11,6 +11,8 @@ import LineString from "ol/geom/LineString";
 import { getLength } from "ol/sphere";
 import { toLonLat } from "ol/proj";
 import { always } from "ol/events/condition";
+import GeoJSON from 'ol/format/GeoJSON';
+import { WFS, GML } from 'ol/format';
 
 const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
   const map = useContext(MapContext);
@@ -105,6 +107,72 @@ const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
 
     // Unir con coma como separador decimal
     return `${formattedInt},${decPart} km`;
+  };
+
+const saveToGeoServer = async () => {
+    const features = vectorSource.getFeatures();
+
+    if (features.length === 0) {
+      alert("Dibuja algo primero");
+      return;
+    }
+
+    // Preparamos los features para la transacción
+    // Es buena práctica clonarlos para no afectar lo que se ve en el mapa
+    const featuresToSave = features.map(f => {
+      const clone = f.clone();
+      // GeoServer necesita saber el ID, pero al insertar uno nuevo, lo dejamos limpio o null
+      clone.setId(null); 
+      return clone;
+    });
+
+    // Crear el serializador WFS
+    const formatWFS = new WFS();
+
+    // Generar el XML de transacción (INSERT)
+    const transactionNode = formatWFS.writeTransaction(
+      featuresToSave, // Features a insertar
+      null,           // Features a actualizar
+      null,           // Features a borrar
+      {
+        featureNS: '/geoserver',
+        featurePrefix: 'tpigis',
+        featureType: "nuevos_elementos",
+        srsName: 'EPSG:4326',
+        gmlOptions: { srsName: 'EPSG:4326' } 
+      }
+    );
+
+    // Convertir el nodo XML a string
+    const xmlSerializer = new XMLSerializer();
+    const xmlString = xmlSerializer.serializeToString(transactionNode);
+
+    // Enviar a GeoServer
+    try {
+      const url = '/geoserver/tpigis/ows';
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        body: xmlString,
+        headers: {
+          'Content-Type': 'text/xml', // GeoServer espera XML
+        },
+      });
+
+      const textResponse = await response.text();
+
+      if (textResponse.includes("TransactionSummary") && !textResponse.includes("Exception")) {
+        alert("¡Dibujo guardado exitosamente en PostGIS!");
+        vectorSource.clear(); // Limpiamos el mapa
+        // Aquí podrías llamar a una función para refrescar la capa WMS principal si la estás visualizando
+      } else {
+        console.error("Error GeoServer:", textResponse);
+        alert("Hubo un error al guardar. Revisa la consola.");
+      }
+    } catch (error) {
+      console.error("Error de red:", error);
+      alert("Error de conexión con GeoServer");
+    }
   };
 
   const startDrawing = (type = drawType) => {
@@ -459,6 +527,18 @@ const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
         >
           ✏️ Dibujar
         </button>
+
+        <div className="tool-pill-separator"></div>
+
+        {activeTool === 'draw' && vectorSource.getFeatures().length > 0 && (
+          <button
+            onClick={saveToGeoServer}
+            className="tool-pill-btn"
+            style={{ backgroundColor: '#48bb78', color: 'white' }}
+          >
+            💾 Guardar
+          </button>
+        )}
 
         <div className="tool-pill-separator"></div>
 
