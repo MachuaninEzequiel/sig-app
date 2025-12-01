@@ -31,11 +31,28 @@ const Tools = () => {
     if (!map) return;
     const vectorLayer = new VectorLayer({
       source: vectorSource,
-      style: new Style({
-        stroke: new Stroke({ color: "#ffcc33", width: 3 }),
-        image: new Circle({ radius: 7, fill: new Fill({ color: "#ffcc33" }) }),
-        fill: new Fill({ color: "rgba(255, 255, 0, 0.1)" }),
-      }),
+      style: (feature) => {
+        const geomType = feature.getGeometry().getType();
+
+        // Estilo especial para rectángulos de consulta
+        if (geomType === 'Polygon') {
+          return new Style({
+            stroke: new Stroke({ color: "#667eea", width: 3 }),
+            fill: new Fill({ color: "rgba(102, 126, 234, 0.15)" }),
+          });
+        }
+
+        // Estilo para puntos y líneas (mediciones)
+        return new Style({
+          stroke: new Stroke({ color: "#667eea", width: 4 }),
+          image: new Circle({
+            radius: 8,
+            fill: new Fill({ color: "#667eea" }),
+            stroke: new Stroke({ color: "white", width: 2 })
+          }),
+          fill: new Fill({ color: "rgba(102, 126, 234, 0.1)" }),
+        });
+      },
       zIndex: 9999,
     });
     map.addLayer(vectorLayer);
@@ -65,21 +82,39 @@ const Tools = () => {
     setMeasureVal(null);
   };
 
+  // Formatear distancia en formato argentino (coma para decimales, punto para miles)
+  const formatDistance = (meters) => {
+    const km = meters / 1000;
+    const kmStr = km.toFixed(3);
+    const [intPart, decPart] = kmStr.split('.');
+
+    // Agregar separador de miles (punto)
+    const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    // Unir con coma como separador decimal
+    return `${formattedInt},${decPart} km`;
+  };
+
   
   const startMeasureFree = () => {
     if (!map) return;
     clearInteractions();
+    setResults(null); // Limpiar resultados de consultas anteriores
     setActiveTool("measure-free");
     setMeasureMode("free");
     setMeasuring(true);
-    setMeasureVal("0.000 km");
+    setMeasureVal("0,000 km");
 
-    const draw = new Draw({ 
-      source: vectorSource, 
+    const draw = new Draw({
+      source: vectorSource,
       type: "LineString",
       style: new Style({
-        stroke: new Stroke({ color: "rgba(0, 0, 0, 0.5)", width: 2, lineDash: [10, 10] }),
-        image: new Circle({ radius: 5, stroke: new Stroke({ color: 'rgba(0, 0, 0, 0.7)' }), fill: new Fill({ color: 'rgba(255, 255, 255, 0.2)' }) })
+        stroke: new Stroke({ color: "#667eea", width: 3, lineDash: [10, 5] }),
+        image: new Circle({
+          radius: 6,
+          stroke: new Stroke({ color: "#667eea", width: 2 }),
+          fill: new Fill({ color: "rgba(255, 255, 255, 0.8)" })
+        })
       })
     });
 
@@ -88,7 +123,7 @@ const Tools = () => {
       sketch.getGeometry().on("change", (evt) => {
         const geom = evt.target;
         const length = getLength(geom);
-        setMeasureVal(`${(length / 1000).toFixed(3)} km`);
+        setMeasureVal(formatDistance(length));
       });
     });
 
@@ -100,6 +135,8 @@ const Tools = () => {
   const startMeasureBetween = () => {
     if (!map) return;
     clearInteractions();
+    setResults(null); // Limpiar resultados de consultas anteriores
+    vectorSource.clear(); // Limpiar mediciones anteriores
     setActiveTool("measure-between");
     setMeasureMode("between");
     setMeasuring(true);
@@ -108,22 +145,27 @@ const Tools = () => {
 
     const handleClick = (evt) => {
       const coord = evt.coordinate;
+
+      // Si ya hay 2 puntos, limpiar y empezar nueva medición
+      if (betweenPointsRef.current.length >= 2) {
+        vectorSource.clear();
+        betweenPointsRef.current = [];
+      }
+
       betweenPointsRef.current.push(coord);
       const point = new Feature({ geometry: new Point(coord) });
       vectorSource.addFeature(point);
 
-      if (betweenPointsRef.current.length === 1) setMeasureVal("Seleccione punto B");
+      if (betweenPointsRef.current.length === 1) {
+        setMeasureVal("Seleccione punto B");
+      }
 
       if (betweenPointsRef.current.length === 2) {
         const coords = betweenPointsRef.current.slice(0, 2);
         const line = new Feature({ geometry: new LineString(coords) });
         vectorSource.addFeature(line);
         const dist = getLength(line.getGeometry());
-        setMeasureVal(`${(dist / 1000).toFixed(3)} km`);
-        map.un("singleclick", handleClick);
-        setMeasuring(false);
-        setMeasureMode(null);
-        setActiveTool(null);
+        setMeasureVal(formatDistance(dist));
       }
     };
     map.on("singleclick", handleClick);
@@ -132,11 +174,19 @@ const Tools = () => {
   
   const activatePointInfo = () => {
     clearInteractions();
+    setMeasureVal(null); // Limpiar tooltip de mediciones
     setActiveTool("info-point");
     map.on("singleclick", handlePointClick);
   };
 
   const handlePointClick = (evt) => {
+      // Agregar marcador visual en el punto clickeado
+      vectorSource.clear();
+      const marker = new Feature({
+        geometry: new Point(evt.coordinate)
+      });
+      vectorSource.addFeature(marker);
+
       doWmsQuery(evt);
   };
 
@@ -159,7 +209,10 @@ const Tools = () => {
         }
       }
 
-      if (!topLayer) return;
+      if (!topLayer) {
+        setResults([{ layer: "Info", properties: { msg: "No hay capas WMS disponibles" } }]);
+        return;
+      }
 
       const url = topLayer.getSource().getGetFeatureInfoUrl(evt.coordinate, viewRes, "EPSG:3857", {
           INFO_FORMAT: "application/json",
@@ -171,7 +224,6 @@ const Tools = () => {
           const resp = await fetch(url);
           const data = await resp.json();
           if (data.features && data.features.length > 0) {
-            vectorSource.clear();
             const enhanced = data.features.map((f) => {
               const geom = f.geometry || null;
               let coords = null;
@@ -182,19 +234,31 @@ const Tools = () => {
             });
             setResults(enhanced);
           } else {
-            setResults([]);
+            setResults([{ layer: topLayer.get("title"), properties: { msg: "No se encontraron elementos en este punto" } }]);
           }
-        } catch (err) { console.error(err); }
+        } catch (err) {
+          console.error(err);
+          setResults([{ layer: "Error", properties: { msg: "Error al consultar el servidor" } }]);
+        }
       }
   };
 
   
   const activateBoxInfo = () => {
     clearInteractions();
+    setMeasureVal(null); // Limpiar tooltip de mediciones
     setActiveTool("info-box");
     const box = new DragBox({ condition: always, className: 'ol-dragbox' });
     box.on("boxend", () => {
-        queryWFSByBox(box.getGeometry().getExtent());
+        const geometry = box.getGeometry();
+        const extent = geometry.getExtent();
+
+        // Dibujar el rectángulo permanente en el mapa
+        vectorSource.clear();
+        const boxFeature = new Feature({ geometry: geometry });
+        vectorSource.addFeature(boxFeature);
+
+        queryWFSByBox(extent);
     });
     map.addInteraction(box);
     dragBoxRef.current = box;
@@ -203,32 +267,45 @@ const Tools = () => {
   const queryWFSByBox = async (extent) => {
     if (!map) return;
     const visibleLayers = map.getLayers().getArray().filter((l) => l.getVisible() && l.get("name"));
-    
+
     if (visibleLayers.length === 0) {
         setResults([{ layer: "Info", properties: { msg: "Active una capa" } }]);
         return;
     }
 
     const bbox = extent.join(",");
+
     try {
         const allFeaturesPromises = visibleLayers.map(async (layer) => {
              const layerName = layer.get("name");
-             // REVISA TU CONFIG AQUÍ
-             const url = `${CONFIG.geoserverUrl}/${CONFIG.workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${CONFIG.workspace}:${layerName}&maxFeatures=50&outputFormat=application/json&bbox=${bbox},EPSG:3857`;
+             const layerTitle = layer.get("title") || layerName;
+
+             const url = `${CONFIG.geoserverUrl}/${CONFIG.workspace}/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=${CONFIG.workspace}:${layerName}&count=50&outputFormat=application/json&srsName=urn:ogc:def:crs:EPSG::3857&bbox=${bbox},urn:ogc:def:crs:EPSG::3857`;
+
              const resp = await fetch(url);
              if(!resp.ok) return [];
+
              const data = await resp.json();
-             return data.features || [];
+
+             return (data.features || []).map(f => ({
+               layer: layerTitle,
+               layerName: layerName,
+               properties: f.properties
+             }));
         });
 
         const allResults = await Promise.all(allFeaturesPromises);
         const combined = allResults.flat();
+
         if(combined.length > 0) {
-             setResults(combined.map(f => ({ layer: "Consulta Caja", properties: f.properties })));
+             setResults(combined);
         } else {
-            setResults([]);
+            setResults([{ layer: "Info", properties: { msg: "No se encontraron elementos en el área seleccionada" } }]);
         }
-    } catch(e) { console.error(e); }
+    } catch(e) {
+      console.error(e);
+      setResults([{ layer: "Error", properties: { msg: "Error al consultar el servidor" } }]);
+    }
   };
 
   const showClearButton = activeTool || (results && results.length > 0) || measureVal;
@@ -295,20 +372,44 @@ const Tools = () => {
         <div className="result-box info-result">
           <div className="result-header">
              <h4>Resultados ({results.length})</h4>
-             <button className="close-results" onClick={()=>setResults(null)}>X</button>
+             <button className="close-results" onClick={()=>{setResults(null); vectorSource.clear();}}>X</button>
           </div>
           <div className="results-list">
-             {results.length === 0 ? <p>Sin datos</p> : 
-               results.map((res, idx) => (
-                <div key={idx} className="result-item">
-                  <strong>{res.layer}</strong>
-                  <ul>
-                    {Object.entries(res.properties || {}).map(([key, val]) => (
-                      <li key={key}><b>{key}:</b> {String(val)}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+             {results.length === 0 ? <p>Sin datos</p> :
+               results.map((res, idx) => {
+                 const isInfoMessage = res.layer === "Info" || res.layer === "Error";
+
+                 // Filtrar propiedades innecesarias
+                 const hiddenFields = ['igds_style', 'igds_type', 'igds_weigh', 'igds_color',
+                                      'igds_level', 'rotation', 'group', 'progreso', 'coord',
+                                      't_act', 'fclass', 'dataset'];
+
+                 const filteredProps = Object.entries(res.properties || {})
+                   .filter(([key, val]) => {
+                     // Ocultar campos técnicos
+                     if (hiddenFields.includes(key)) return false;
+                     // Ocultar valores null, undefined o vacíos
+                     if (val === null || val === undefined || val === '') return false;
+                     return true;
+                   });
+
+                 return (
+                   <div key={idx} className={`result-item ${isInfoMessage ? 'info-message' : ''}`}>
+                     <strong>{res.layer}</strong>
+                     <ul>
+                       {filteredProps.length > 0 ? (
+                         filteredProps.map(([key, val]) => (
+                           <li key={key}>
+                             {isInfoMessage ? String(val) : <><b>{key}:</b> {String(val)}</>}
+                           </li>
+                         ))
+                       ) : (
+                         <li>Sin información disponible</li>
+                       )}
+                     </ul>
+                   </div>
+                 );
+               })}
           </div>
         </div>
       )}
