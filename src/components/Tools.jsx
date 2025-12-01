@@ -29,6 +29,8 @@ const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
   const betweenClickHandlerRef = useRef(null);
   const pointClickHandlerRef = useRef(null);
 
+  const [drawType, setDrawType] = useState("Polygon"); // Por defecto Polígono
+
   useEffect(() => {
     if (!map) return;
     const vectorLayer = new VectorLayer({
@@ -105,7 +107,37 @@ const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
     return `${formattedInt},${decPart} km`;
   };
 
-  
+  const startDrawing = (type = drawType) => {
+    if (!map) return;
+    
+    // 1. Limpiamos interacciones previas (mediciones, consultas, etc)
+    clearInteractions();
+    
+    // 2. Seteamos el estado visual
+    setActiveTool("draw");
+    setMeasureMode(null);
+    setResults(null); // Opcional: si quieres ocultar resultados previos
+
+    // 3. Creamos la interacción de dibujo de OpenLayers
+    const draw = new Draw({
+      source: vectorSource,
+      type: type, // 'Point', 'LineString', 'Polygon', 'Circle'
+    });
+
+    map.addInteraction(draw);
+    drawRef.current = draw;
+  };
+
+  // Efecto para reiniciar la herramienta si el usuario cambia el tipo de geometría
+  // mientras la herramienta de dibujo está activa
+  useEffect(() => {
+    if (activeTool === "draw" && map) {
+      startDrawing(drawType);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawType]);
+
+
   const startMeasureFree = () => {
     if (!map) return;
     clearInteractions();
@@ -396,6 +428,36 @@ const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
           title="Consultar información arrastrando una caja"
         >
           ⬜ Consulta (Caja)
+        </button>
+
+        <div className="tool-pill-separator"></div>
+
+        <select 
+          className="tool-pill-select"
+          value={drawType}
+          onChange={(e) => setDrawType(e.target.value)}
+          title="Tipo de geometría a dibujar"
+        >
+          <option value="Point">Punto</option>
+          <option value="LineString">Línea</option>
+          <option value="Polygon">Polígono</option>
+          <option value="Circle">Círculo</option>
+        </select>
+
+        {/* BOTÓN DE DIBUJAR */}
+        <button
+          onClick={() => {
+            if (activeTool === "draw") {
+              fullReset(); // Si ya está activo, lo apagamos y limpiamos
+            } else {
+              if (analysisPanelOpen) onToggleAnalysis();
+              startDrawing();
+            }
+          }}
+          className={`tool-pill-btn ${activeTool === "draw" ? "active" : ""}`}
+          title="Dibujar figuras libres"
+        >
+          ✏️ Dibujar
         </button>
 
         <div className="tool-pill-separator"></div>
