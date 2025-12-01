@@ -12,7 +12,7 @@ import { getLength } from "ol/sphere";
 import { toLonLat } from "ol/proj";
 import { always } from "ol/events/condition";
 
-const Tools = () => {
+const Tools = ({ onToggleAnalysis }) => {
   const map = useContext(MapContext);
   const [activeTool, setActiveTool] = useState(null);
   const [results, setResults] = useState(null);
@@ -347,6 +347,16 @@ const Tools = () => {
           title="Consultar información arrastrando una caja"
         >
           ⬜ Consulta (Caja)
+        </button>
+
+        <div className="tool-pill-separator"></div>
+
+        <button
+          onClick={onToggleAnalysis}
+          className="tool-pill-btn"
+          title="Abrir panel de análisis"
+        >
+          🔬 Análisis
         </button>
 
         {showClearButton && (

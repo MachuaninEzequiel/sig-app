@@ -6,12 +6,14 @@ import "./App.css"
 import Tools from "./components/Tools";
 import Legend from "./components/Legend";
 import Editor from "./components/Editor"
+import AnalysisPanel from "./components/AnalysisPanel";
 
 
 
 function Nav() {
 
 const [sidebarOpen, setSidebarOpen] = useState(true);
+const [analysisPanelOpen, setAnalysisPanelOpen] = useState(false);
 
     return(
     <div className="nav-toolbar">
@@ -26,17 +28,23 @@ const [sidebarOpen, setSidebarOpen] = useState(true);
 
         <div className="tools-buttons-row">
             
-            <Tools />
+            <Tools onToggleAnalysis={() => setAnalysisPanelOpen(!analysisPanelOpen)} />
         </div>
         <div className="leyersidebar">
             <div className={`sidebar ${sidebarOpen ? "visible" : "hidden"}`}>
-
                     <LayerControl />
                     {/* <Legend/>
                     <Editor /> */}
         
             </div>
         </div>
+
+        {analysisPanelOpen && (
+            <AnalysisPanel 
+                isOpen={analysisPanelOpen} 
+                onClose={() => setAnalysisPanelOpen(false)} 
+            />
+        )}
         
     </div>
     )
