@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import { MapContext } from "./Map";
 import { CONFIG } from "../config";
 
-const Legend = () => {
+const Legend = ({ leyendaBtn, setLeyendaBtn }) => {
   const map = useContext(MapContext);
   const [visibleLayers, setVisibleLayers] = useState([]);
 
@@ -25,11 +25,27 @@ const Legend = () => {
     return () => map.un("rendercomplete", key);
   }, [map]);
 
+  // Si no hay capas seleccionadas, el componente no se renderiza (desaparece)
   if (visibleLayers.length === 0) return null;
 
   return (
-    <div className="panel-leyenda legend-panel">
+    /* Aplicamos la clase 'collapsed' si leyendaBtn es false.
+       Esto activa la transición CSS para minimizar altura.
+    */
+    <div className={`panel-leyenda legend-panel ${!leyendaBtn ? "collapsed" : ""}`}>
+      
+      {/* Botón Toggle */}
+      <button
+        className={`leyend-toggle ${leyendaBtn ? "open" : ""}`}
+        onClick={() => setLeyendaBtn(!leyendaBtn)}
+        title={leyendaBtn ? "Minimizar simbología" : "Mostrar simbología"}
+      >
+        {leyendaBtn ? "X" : "+"}
+      </button>
+
       <h3>Simbología</h3>
+
+      {/* Contenido de la leyenda */}
       <div className="legend-content">
         {visibleLayers.map((l, i) => {
           const name = l.get("name");

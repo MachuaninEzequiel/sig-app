@@ -20,6 +20,16 @@ const LayerControl = () => {
     setLayers([...layers]);
   };
 
+  // --- NUEVA FUNCIÓN: Ocultar todas las capas ---
+  const hideAllLayers = () => {
+    layers.forEach((l) => l.setVisible(false));
+    // Forzamos actualización para que los checkbox se desmarquen visualmente
+    setLayers([...layers]);
+  };
+
+  // Calculamos si hay al menos una capa visible para habilitar/deshabilitar el botón
+  const hasVisibleLayers = layers.some((l) => l.getVisible());
+
   // Agrupar por categoría
   const groupedLayers = useMemo(() => {
     const groups = {};
@@ -41,6 +51,7 @@ const LayerControl = () => {
   return (
     <div className="panel layer-control-panel">
       <h3>Capas ({layers.length})</h3>
+      
       <input
         type="text"
         placeholder="Buscar capa..."
@@ -48,6 +59,16 @@ const LayerControl = () => {
         onChange={(e) => setSearchTerm(e.target.value)}
         className="layer-search"
       />
+
+      {/* --- NUEVO BOTÓN --- */}
+      <button 
+        className="btn-clean-layers" 
+        onClick={hideAllLayers}
+        disabled={!hasVisibleLayers} // Se desactiva si todo está apagado
+        title="Ocultar todas las capas visibles"
+      >
+        Eliminar todas las capas
+      </button>
 
       <div className="layer-list-container">
         {searchTerm !== "" ? (
@@ -64,7 +85,7 @@ const LayerControl = () => {
           </div>
         ) : (
           Object.entries(groupedLayers).map(([category, groupLayers]) => (
-            <details key={category} open={false}>
+            <details key={category}>
               <summary>
                 {category} <span className="badge">{groupLayers.length}</span>
               </summary>
