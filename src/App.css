@@ -59,18 +59,21 @@ body {
   background: #f3eeee;
   border: 1px solid black;
   border-radius: 6px;
-  padding: 10px;
-  position: relative; 
+  padding: 1rem 0.3rem 1rem 0.6rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease;
   overflow: hidden;
   pointer-events: auto; 
-  max-height: 20rem; 
+  max-height: 15rem; 
   opacity: 1;
   animation: slideUpFade 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)
 }
 
 .panel-leyenda.collapsed {
   max-height: 1.3rem; 
+  padding-bottom: 0;
 }
 
 .panel-leyenda.collapsed .legend-content {
@@ -132,9 +135,11 @@ body {
 
 .legend-content {
   overflow-y: auto;
-  max-height: 12rem; 
+  flex: 1;
+  min-height: 0;
   opacity: 1;
   transition: opacity 0.3s ease 0.1s; 
+  padding-right: 5px;
 }
 
 .legend-item {
@@ -150,7 +155,121 @@ body {
 
 .legend-item img {
   max-height: 20px;
+  width: 1.5rem;
   vertical-align: middle;
+}
+
+.legend-item img.legend-thumbnail {
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  padding: 1px;
+  background: white;
+  transition: transform 0.2s;
+}
+
+.legend-item img.legend-thumbnail:hover {
+  transform: scale(1.2);
+  border-color: #007bff;
+}
+
+.legend-modal-overlay {
+  position: fixed;
+  top: 10rem;
+  left: 5rem;
+
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 50000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.2s ease-in-out;
+  pointer-events: auto;
+  
+  cursor: default; 
+}
+
+.legend-modal-content {
+  background: white;
+  padding: 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  
+  /* IMPORTANTE: Dimensiones mínimas y máximas para que no se rompa */
+  min-width: 320px; 
+  max-width: 90vw;
+  max-height: 85vh;
+  
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Cabecera del modal - CORREGIDA */
+.legend-modal-header {
+  display: flex;
+  align-items: center;       /* Centrado vertical */
+  justify-content: space-between; /* Espacio entre título y botón */
+  padding: 12px 15px;
+  background-color: #f3eeee;
+  border-bottom: 1px solid #ccc;
+  gap: 10px; /* Separación mínima entre texto y botón */
+}
+
+.legend-modal-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex-grow: 1; /* Ocupa todo el espacio disponible */
+  text-align: left;
+  line-height: 1.2;
+}
+
+/* Botón de cerrar */
+.close-modal-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0; /* Evita que el botón se aplaste si el texto es largo */
+  transition: background 0.2s, color 0.2s;
+}
+
+.close-modal-btn:hover {
+  background-color: rgba(0,0,0,0.1);
+  color: #d32f2f;
+}
+
+/* Cuerpo del modal */
+.legend-modal-body {
+  padding: 20px;
+  overflow: auto; /* Scroll si la imagen es gigante */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  min-height: 100px; /* Altura mínima estética */
+}
+
+.legend-modal-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes slideUpFade {
@@ -357,7 +476,7 @@ button:disabled {
 .result-box {
   position: absolute;
   top: 8rem;
-  left: 1rem;
+  left: 5rem;
   padding: 0;
   background: white;
   border: 2px solid #2c3e50;
@@ -376,19 +495,20 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   padding: 12px 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f3eeeed2;
   border-bottom: none;
 }
 
 .result-header h4 {
   margin: 0;
-  color: white;
-  font-size: 1rem;
+  color: rgb(0, 0, 0);
+  font-size: 1.2rem;
+  line-height: 2rem;
   font-weight: 600;
 }
 
 .close-results {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(231, 24, 24, 0.2);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 50%;
@@ -405,7 +525,7 @@ button:disabled {
 }
 
 .close-results:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(212, 16, 16, 0.3);
   transform: scale(1.1);
 }
 
@@ -479,7 +599,6 @@ button:disabled {
   text-align: left;
 }
 
-/* Mensajes informativos especiales */
 .results-list .result-item.info-message {
   background: #e3f2fd;
   border-color: #2196f3;
@@ -687,23 +806,24 @@ button.tool-pill-btn.btn-pill-clear:hover {
   background-color: #fce8e6;
 }
 
-/* Tooltip flotante de medición */
 .floating-measure-tooltip {
   position: absolute;
   top: 6.5rem;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  background: #3c82eb;
   color: white;
   padding: 12px 24px;
   border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 500;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   z-index: 10000;
   pointer-events: none;
   animation: pulseGlow 2s ease-in-out infinite;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid black;
 }
 
 @keyframes pulseGlow {
@@ -714,10 +834,11 @@ button.tool-pill-btn.btn-pill-clear:hover {
     box-shadow: 0 4px 25px rgba(102, 126, 234, 0.6);
   }
 }
+
 .analysis-panel {
   position: absolute;
-  top: 4.8rem;
-  left: 10px;
+  top: 6rem;
+  left: 4rem;
   width: 320px;
   max-height: 90vh;
   background: #f3eeee;
@@ -739,8 +860,6 @@ button.tool-pill-btn.btn-pill-clear:hover {
   text-decoration: underline;
   border-bottom: 1px solid gray;
 }
-
-
 
 .analysis-form {
   display: flex;
@@ -829,3 +948,42 @@ button.tool-pill-btn.btn-pill-clear:hover {
   margin-bottom: 10px;
 }
 
+.compass-container {
+  position: absolute;
+  bottom: 3.5rem; 
+  left: 1.5rem;
+  z-index: 1000;
+  
+  
+  width: 55px;
+  height: 55px;
+  
+ 
+  background-color: #ffffff; 
+  border-radius: 50%;        
+  border: 2px solid #a0a0a0; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3); 
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.2s ease-in-out;
+}
+
+.compass-container:hover {
+  transform: scale(1.1); 
+  border-color: #333;   
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+.compass-image {
+  width: 110%; 
+  height: auto;
+  display: block;
+  
+  transition: transform 0.1s linear; 
+  
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+}
