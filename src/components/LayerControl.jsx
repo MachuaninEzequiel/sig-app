@@ -67,7 +67,7 @@ const LayerControl = () => {
         disabled={!hasVisibleLayers} // Se desactiva si todo está apagado
         title="Ocultar todas las capas visibles"
       >
-        Eliminar todas las capas
+        Desactivar todas las capas
       </button>
 
       <div className="layer-list-container">
