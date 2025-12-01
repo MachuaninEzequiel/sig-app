@@ -20,17 +20,17 @@ const LayerControl = () => {
     setLayers([...layers]);
   };
 
-  // --- NUEVA FUNCIÓN: Ocultar todas las capas ---
+  
   const hideAllLayers = () => {
     layers.forEach((l) => l.setVisible(false));
-    // Forzamos actualización para que los checkbox se desmarquen visualmente
+    
     setLayers([...layers]);
   };
 
-  // Calculamos si hay al menos una capa visible para habilitar/deshabilitar el botón
+  
   const hasVisibleLayers = layers.some((l) => l.getVisible());
 
-  // Agrupar por categoría
+  
   const groupedLayers = useMemo(() => {
     const groups = {};
     layers.forEach((layer) => {
@@ -60,14 +60,14 @@ const LayerControl = () => {
         className="layer-search"
       />
 
-      {/* --- NUEVO BOTÓN --- */}
+      
       <button 
         className="btn-clean-layers" 
         onClick={hideAllLayers}
-        disabled={!hasVisibleLayers} // Se desactiva si todo está apagado
+        disabled={!hasVisibleLayers} 
         title="Ocultar todas las capas visibles"
       >
-        Eliminar todas las capas
+        Desactivar todas las capas
       </button>
 
       <div className="layer-list-container">

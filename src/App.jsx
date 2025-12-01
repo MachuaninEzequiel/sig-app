@@ -6,6 +6,7 @@ import Tools from "./components/Tools";
 import Editor from "./components/Editor";
 import "./App.css";
 import Nav from "./nav";
+import  Compass from "./components/RosaDelosVientos"
 
 function App() {
   
@@ -38,7 +39,7 @@ function App() {
 
       
     </div>
-      
+    <Compass/>
     </MapWrapper>
   );
 }
