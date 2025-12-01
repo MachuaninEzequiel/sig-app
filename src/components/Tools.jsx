@@ -26,6 +26,8 @@ const Tools = ({ onToggleAnalysis }) => {
   const drawRef = useRef(null);
   const dragBoxRef = useRef(null);
   const betweenPointsRef = useRef([]);
+  const betweenClickHandlerRef = useRef(null);
+  const pointClickHandlerRef = useRef(null);
 
   useEffect(() => {
     if (!map) return;
@@ -69,9 +71,15 @@ const Tools = ({ onToggleAnalysis }) => {
       map.removeInteraction(dragBoxRef.current);
       dragBoxRef.current = null;
     }
-    // Remover TODOS los event listeners de singleclick
-    map.un("singleclick", handlePointClick);
-    map.un("singleclick", handleBetweenClick);
+    // Remover TODOS los event listeners de singleclick usando los refs
+    if (betweenClickHandlerRef.current) {
+      map.un("singleclick", betweenClickHandlerRef.current);
+      betweenClickHandlerRef.current = null;
+    }
+    if (pointClickHandlerRef.current) {
+      map.un("singleclick", pointClickHandlerRef.current);
+      pointClickHandlerRef.current = null;
+    }
     setMeasuring(false);
     setMeasureMode(null);
     setActiveTool(null);
@@ -134,32 +142,6 @@ const Tools = ({ onToggleAnalysis }) => {
   };
 
   
-  const handleBetweenClick = (evt) => {
-    const coord = evt.coordinate;
-
-    // Si ya hay 2 puntos, limpiar y empezar nueva medición
-    if (betweenPointsRef.current.length >= 2) {
-      vectorSource.clear();
-      betweenPointsRef.current = [];
-    }
-
-    betweenPointsRef.current.push(coord);
-    const point = new Feature({ geometry: new Point(coord) });
-    vectorSource.addFeature(point);
-
-    if (betweenPointsRef.current.length === 1) {
-      setMeasureVal("Seleccione punto B");
-    }
-
-    if (betweenPointsRef.current.length === 2) {
-      const coords = betweenPointsRef.current.slice(0, 2);
-      const line = new Feature({ geometry: new LineString(coords) });
-      vectorSource.addFeature(line);
-      const dist = getLength(line.getGeometry());
-      setMeasureVal(formatDistance(dist));
-    }
-  };
-
   const startMeasureBetween = () => {
     if (!map) return;
     clearInteractions();
@@ -171,6 +153,35 @@ const Tools = ({ onToggleAnalysis }) => {
     betweenPointsRef.current = [];
     setMeasureVal("Seleccione punto A");
 
+    // Crear nueva función handler cada vez
+    const handleBetweenClick = (evt) => {
+      const coord = evt.coordinate;
+
+      // Si ya hay 2 puntos, limpiar y empezar nueva medición
+      if (betweenPointsRef.current.length >= 2) {
+        vectorSource.clear();
+        betweenPointsRef.current = [];
+        setMeasureVal("Seleccione punto A");
+      }
+
+      betweenPointsRef.current.push(coord);
+      const point = new Feature({ geometry: new Point(coord) });
+      vectorSource.addFeature(point);
+
+      if (betweenPointsRef.current.length === 1) {
+        setMeasureVal("Seleccione punto B");
+      }
+
+      if (betweenPointsRef.current.length === 2) {
+        const coords = betweenPointsRef.current.slice(0, 2);
+        const line = new Feature({ geometry: new LineString(coords) });
+        vectorSource.addFeature(line);
+        const dist = getLength(line.getGeometry());
+        setMeasureVal(formatDistance(dist));
+      }
+    };
+
+    betweenClickHandlerRef.current = handleBetweenClick;
     map.on("singleclick", handleBetweenClick);
   };
 
@@ -179,10 +190,8 @@ const Tools = ({ onToggleAnalysis }) => {
     clearInteractions();
     setMeasureVal(null); // Limpiar tooltip de mediciones
     setActiveTool("info-point");
-    map.on("singleclick", handlePointClick);
-  };
-
-  const handlePointClick = (evt) => {
+    
+    const handlePointClick = (evt) => {
       // Agregar marcador visual en el punto clickeado
       vectorSource.clear();
       const marker = new Feature({
@@ -191,6 +200,10 @@ const Tools = ({ onToggleAnalysis }) => {
       vectorSource.addFeature(marker);
 
       doWmsQuery(evt);
+    };
+
+    pointClickHandlerRef.current = handlePointClick;
+    map.on("singleclick", handlePointClick);
   };
 
   const doWmsQuery = async (evt) => {
