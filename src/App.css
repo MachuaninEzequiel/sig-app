@@ -59,21 +59,20 @@ body {
   background: #f3eeee;
   border: 1px solid black;
   border-radius: 6px;
-  padding: 1rem 0.3rem 1rem 0.6rem;
+  padding: 1rem 0.2rem 1rem 0.6rem;
   position: relative;
   display: flex;
   flex-direction: column;
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease;
   overflow: hidden;
   pointer-events: auto; 
-  max-height: 15rem; 
+  max-height: 10rem; 
   opacity: 1;
   animation: slideUpFade 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)
 }
 
 .panel-leyenda.collapsed {
   max-height: 1.3rem; 
-  padding-bottom: 0;
 }
 
 .panel-leyenda.collapsed .legend-content {
@@ -149,7 +148,7 @@ body {
   margin-bottom: 5px;
   padding-bottom: 5px;
   font-size: 0.85rem;
-  width: 95%;
+  width: 99%;
   border-bottom: 1px solid rgba(190, 190, 190, 0.596);
 }
 
