@@ -69,7 +69,9 @@ const Tools = ({ onToggleAnalysis }) => {
       map.removeInteraction(dragBoxRef.current);
       dragBoxRef.current = null;
     }
+    // Remover TODOS los event listeners de singleclick
     map.un("singleclick", handlePointClick);
+    map.un("singleclick", handleBetweenClick);
     setMeasuring(false);
     setMeasureMode(null);
     setActiveTool(null);
@@ -132,6 +134,32 @@ const Tools = ({ onToggleAnalysis }) => {
   };
 
   
+  const handleBetweenClick = (evt) => {
+    const coord = evt.coordinate;
+
+    // Si ya hay 2 puntos, limpiar y empezar nueva medición
+    if (betweenPointsRef.current.length >= 2) {
+      vectorSource.clear();
+      betweenPointsRef.current = [];
+    }
+
+    betweenPointsRef.current.push(coord);
+    const point = new Feature({ geometry: new Point(coord) });
+    vectorSource.addFeature(point);
+
+    if (betweenPointsRef.current.length === 1) {
+      setMeasureVal("Seleccione punto B");
+    }
+
+    if (betweenPointsRef.current.length === 2) {
+      const coords = betweenPointsRef.current.slice(0, 2);
+      const line = new Feature({ geometry: new LineString(coords) });
+      vectorSource.addFeature(line);
+      const dist = getLength(line.getGeometry());
+      setMeasureVal(formatDistance(dist));
+    }
+  };
+
   const startMeasureBetween = () => {
     if (!map) return;
     clearInteractions();
@@ -143,32 +171,7 @@ const Tools = ({ onToggleAnalysis }) => {
     betweenPointsRef.current = [];
     setMeasureVal("Seleccione punto A");
 
-    const handleClick = (evt) => {
-      const coord = evt.coordinate;
-
-      // Si ya hay 2 puntos, limpiar y empezar nueva medición
-      if (betweenPointsRef.current.length >= 2) {
-        vectorSource.clear();
-        betweenPointsRef.current = [];
-      }
-
-      betweenPointsRef.current.push(coord);
-      const point = new Feature({ geometry: new Point(coord) });
-      vectorSource.addFeature(point);
-
-      if (betweenPointsRef.current.length === 1) {
-        setMeasureVal("Seleccione punto B");
-      }
-
-      if (betweenPointsRef.current.length === 2) {
-        const coords = betweenPointsRef.current.slice(0, 2);
-        const line = new Feature({ geometry: new LineString(coords) });
-        vectorSource.addFeature(line);
-        const dist = getLength(line.getGeometry());
-        setMeasureVal(formatDistance(dist));
-      }
-    };
-    map.on("singleclick", handleClick);
+    map.on("singleclick", handleBetweenClick);
   };
 
   
