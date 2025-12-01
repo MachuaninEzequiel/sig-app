@@ -87,33 +87,34 @@ body {
   pointer-events: auto;
   font-size: 1rem;
   line-height: 1;
-  background-color: #6da4b4cc;
+  background-color: #c85a54;
   color: rgb(255, 255, 255);
-  border: 1px solid black;
-  border-radius: 50px;
+  border: 1px solid #a04540;
+  border-radius: 50%;
   width: 1.6rem;
-  height: 1.5rem;
+  height: 1.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease, background-color 0.2s;
 }
 
 .leyend-toggle.open {
   font-size: 0.8rem;
-  background-color: rgb(206, 97, 97);
+  background-color: #b04a45;
   color: white;
 }
 
 .leyend-toggle:hover {
   transform: scale(1.1);
-  border: 2px solid black;
+  background-color: #d46560;
+  border: 2px solid #8a3833;
 }
 
 .leyend-toggle.open:hover {
-  background-color: rgb(230, 39, 39);
+  background-color: #d46560;
 }
 
 .panel-leyenda h3 {
@@ -737,24 +738,9 @@ button.tool-pill-btn.btn-pill-clear:hover {
   padding-bottom: 10px;
   text-decoration: underline;
   border-bottom: 1px solid gray;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-.analysis-panel .close-btn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: #555;
-  padding: 0;
-  line-height: 1;
-}
 
-.analysis-panel .close-btn:hover {
-  color: #d32f2f;
-}
 
 .analysis-form {
   display: flex;

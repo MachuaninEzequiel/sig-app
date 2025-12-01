@@ -12,7 +12,7 @@ import { getLength } from "ol/sphere";
 import { toLonLat } from "ol/proj";
 import { always } from "ol/events/condition";
 
-const Tools = ({ onToggleAnalysis }) => {
+const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
   const map = useContext(MapContext);
   const [activeTool, setActiveTool] = useState(null);
   const [results, setResults] = useState(null);
@@ -109,6 +109,7 @@ const Tools = ({ onToggleAnalysis }) => {
   const startMeasureFree = () => {
     if (!map) return;
     clearInteractions();
+    vectorSource.clear(); // Limpiar elementos anteriores
     setResults(null); // Limpiar resultados de consultas anteriores
     setActiveTool("measure-free");
     setMeasureMode("free");
@@ -145,8 +146,8 @@ const Tools = ({ onToggleAnalysis }) => {
   const startMeasureBetween = () => {
     if (!map) return;
     clearInteractions();
+    vectorSource.clear(); // Limpiar elementos anteriores
     setResults(null); // Limpiar resultados de consultas anteriores
-    vectorSource.clear(); // Limpiar mediciones anteriores
     setActiveTool("measure-between");
     setMeasureMode("between");
     setMeasuring(true);
@@ -188,7 +189,9 @@ const Tools = ({ onToggleAnalysis }) => {
   
   const activatePointInfo = () => {
     clearInteractions();
+    vectorSource.clear(); // Limpiar elementos anteriores
     setMeasureVal(null); // Limpiar tooltip de mediciones
+    setResults(null); // Limpiar resultados anteriores
     setActiveTool("info-point");
     
     const handlePointClick = (evt) => {
@@ -262,7 +265,9 @@ const Tools = ({ onToggleAnalysis }) => {
   
   const activateBoxInfo = () => {
     clearInteractions();
+    vectorSource.clear(); // Limpiar elementos anteriores
     setMeasureVal(null); // Limpiar tooltip de mediciones
+    setResults(null); // Limpiar resultados anteriores
     setActiveTool("info-box");
     const box = new DragBox({ condition: always, className: 'ol-dragbox' });
     box.on("boxend", () => {
@@ -324,7 +329,7 @@ const Tools = ({ onToggleAnalysis }) => {
     }
   };
 
-  const showClearButton = activeTool || (results && results.length > 0) || measureVal;
+  const showClearButton = activeTool || (results && results.length > 0) || measureVal || analysisPanelOpen;
 
   return (
     <>
@@ -332,7 +337,14 @@ const Tools = ({ onToggleAnalysis }) => {
       <div className="tools-pill-container">
         
         <button
-          onClick={() => startMeasureFree()}
+          onClick={() => {
+            if (measureMode === "free") {
+              fullReset();
+            } else {
+              if (analysisPanelOpen) onToggleAnalysis();
+              startMeasureFree();
+            }
+          }}
           className={`tool-pill-btn ${measureMode === "free" ? "active" : ""}`}
           title="Medir distancia libre"
         >
@@ -340,7 +352,14 @@ const Tools = ({ onToggleAnalysis }) => {
         </button>
 
         <button
-          onClick={() => startMeasureBetween()}
+          onClick={() => {
+            if (measureMode === "between") {
+              fullReset();
+            } else {
+              if (analysisPanelOpen) onToggleAnalysis();
+              startMeasureBetween();
+            }
+          }}
           className={`tool-pill-btn ${measureMode === "between" ? "active" : ""}`}
           title="Medir entre dos puntos"
         >
@@ -350,7 +369,14 @@ const Tools = ({ onToggleAnalysis }) => {
         <div className="tool-pill-separator"></div>
 
         <button
-          onClick={activatePointInfo}
+          onClick={() => {
+            if (activeTool === "info-point") {
+              fullReset();
+            } else {
+              if (analysisPanelOpen) onToggleAnalysis();
+              activatePointInfo();
+            }
+          }}
           className={`tool-pill-btn ${activeTool === "info-point" ? "active" : ""}`}
           title="Consultar información en un punto"
         >
@@ -358,7 +384,14 @@ const Tools = ({ onToggleAnalysis }) => {
         </button>
 
         <button
-          onClick={activateBoxInfo}
+          onClick={() => {
+            if (activeTool === "info-box") {
+              fullReset();
+            } else {
+              if (analysisPanelOpen) onToggleAnalysis();
+              activateBoxInfo();
+            }
+          }}
           className={`tool-pill-btn ${activeTool === "info-box" ? "active" : ""}`}
           title="Consultar información arrastrando una caja"
         >
@@ -368,16 +401,32 @@ const Tools = ({ onToggleAnalysis }) => {
         <div className="tool-pill-separator"></div>
 
         <button
-          onClick={onToggleAnalysis}
-          className="tool-pill-btn"
-          title="Abrir panel de análisis"
+          onClick={() => {
+            if (analysisPanelOpen) {
+              onToggleAnalysis();
+            } else {
+              fullReset();
+              onToggleAnalysis();
+            }
+          }}
+          className={`tool-pill-btn ${analysisPanelOpen ? "active" : ""}`}
+          title="Panel de análisis espacial"
         >
           🔬 Análisis
         </button>
 
         {showClearButton && (
             <button
-              onClick={fullReset}
+              onClick={() => {
+                fullReset();
+                if (analysisPanelOpen) {
+                  // Limpiar el highlight del análisis antes de cerrar
+                  if (analysisPanelRef?.current?.clearHighlight) {
+                    analysisPanelRef.current.clearHighlight();
+                  }
+                  onToggleAnalysis();
+                }
+              }}
               className="tool-pill-btn btn-pill-clear"
               title="Limpiar todo"
             >

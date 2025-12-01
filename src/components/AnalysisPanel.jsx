@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
+import React, { useContext, useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { MapContext } from "./Map";
 import { CONFIG } from "../config";
 import { Vector as VectorSource } from "ol/source";
@@ -7,7 +7,7 @@ import { Style, Stroke } from "ol/style";
 import GeoJSON from "ol/format/GeoJSON";
 import { getLength } from "ol/sphere";
 
-const AnalysisPanel = ({ isOpen, onClose }) => {
+const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
   const map = useContext(MapContext);
   const [analysisType, setAnalysisType] = useState("longitud-ruta");
   const [loading, setLoading] = useState(false);
@@ -50,6 +50,18 @@ const AnalysisPanel = ({ isOpen, onClose }) => {
         setError(null);
     }
   }, [isOpen]);
+
+  // Limpiar al desmontar el componente
+  useEffect(() => {
+    return () => {
+      clearHighlight();
+    };
+  }, []);
+
+  // Exponer la función clearHighlight al componente padre
+  useImperativeHandle(ref, () => ({
+    clearHighlight
+  }));
 
   // Cargar opciones disponibles al abrir el panel
   useEffect(() => {
@@ -274,9 +286,11 @@ const AnalysisPanel = ({ isOpen, onClose }) => {
 
   return (
     <div className="panel analysis-panel">
+      <button className="leyend-toggle" onClick={handleClose} title="Cerrar panel">
+        X
+      </button>
       <h3>
         🔬 Análisis Espacial
-        <button className="close-btn" onClick={handleClose}>×</button>
       </h3>
 
       <div className="analysis-form">
@@ -374,6 +388,8 @@ const AnalysisPanel = ({ isOpen, onClose }) => {
       )}
     </div>
   );
-};
+});
+
+AnalysisPanel.displayName = 'AnalysisPanel';
 
 export default AnalysisPanel;

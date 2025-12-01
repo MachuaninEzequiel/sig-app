@@ -1,7 +1,7 @@
 import "./components/Nav.css"
 import {} from "./components/Tools"
 import LayerControl from "./components/LayerControl";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import "./App.css"
 import Tools from "./components/Tools";
 import Legend from "./components/Legend";
@@ -14,6 +14,7 @@ function Nav() {
 
 const [sidebarOpen, setSidebarOpen] = useState(true);
 const [analysisPanelOpen, setAnalysisPanelOpen] = useState(false);
+const analysisPanelRef = useRef(null);
 
     return(
     <div className="nav-toolbar">
@@ -28,7 +29,11 @@ const [analysisPanelOpen, setAnalysisPanelOpen] = useState(false);
 
         <div className="tools-buttons-row">
             
-            <Tools onToggleAnalysis={() => setAnalysisPanelOpen(!analysisPanelOpen)} />
+            <Tools 
+                analysisPanelOpen={analysisPanelOpen}
+                onToggleAnalysis={() => setAnalysisPanelOpen(!analysisPanelOpen)}
+                analysisPanelRef={analysisPanelRef}
+            />
         </div>
         <div className="leyersidebar">
             <div className={`sidebar ${sidebarOpen ? "visible" : "hidden"}`}>
@@ -41,6 +46,7 @@ const [analysisPanelOpen, setAnalysisPanelOpen] = useState(false);
 
         {analysisPanelOpen && (
             <AnalysisPanel 
+                ref={analysisPanelRef}
                 isOpen={analysisPanelOpen} 
                 onClose={() => setAnalysisPanelOpen(false)} 
             />
