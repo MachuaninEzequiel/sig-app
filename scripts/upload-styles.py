@@ -47,13 +47,27 @@ def create_style(style_name):
 def upload_sld_content(style_name, sld_content):
     """Sube el contenido SLD al estilo"""
     url = f"{GEOSERVER_URL}/rest/workspaces/{WORKSPACE}/styles/{style_name}"
-    headers = {"Content-Type": "application/vnd.ogc.sld+xml"}
+
+    # Detectar si es SLD 1.1.0 (usa namespace se:) o SLD 1.0.0 (usa namespace sld:)
+    is_sld_11 = 'xmlns:se="http://www.opengis.net/se"' in sld_content or 'version="1.1' in sld_content
+
+    # Usar el Content-Type correcto según la versión
+    if is_sld_11:
+        headers = {"Content-Type": "application/vnd.ogc.se+xml; charset=UTF-8"}
+    else:
+        headers = {"Content-Type": "application/vnd.ogc.sld+xml; charset=UTF-8"}
+
+    # Convertir a UTF-8 si es string, o enviar como bytes
+    if isinstance(sld_content, str):
+        sld_bytes = sld_content.encode('utf-8')
+    else:
+        sld_bytes = sld_content
 
     response = requests.put(
         url,
         auth=HTTPBasicAuth(GEOSERVER_USER, GEOSERVER_PASSWORD),
         headers=headers,
-        data=sld_content
+        data=sld_bytes
     )
 
     return response
@@ -127,14 +141,21 @@ def process_style_file(sld_file):
         time.sleep(0.5)
 
         # Paso 2: Subir el contenido SLD
-        print(f"→ Subiendo contenido SLD...")
+        # Detectar versión
+        is_sld_11 = 'xmlns:se="http://www.opengis.net/se"' in sld_content or 'version="1.1' in sld_content
+        sld_version = "1.1.0 (SE)" if is_sld_11 else "1.0.0"
+
+        print(f"→ Subiendo contenido SLD (versión {sld_version})...")
         response = upload_sld_content(style_name, sld_content)
 
         if response.status_code == 200:
             print(f"  ✓ Contenido SLD subido exitosamente")
+            # Verificar tamaño
+            content_size = len(sld_content.encode('utf-8') if isinstance(sld_content, str) else sld_content)
+            print(f"    Tamaño: {content_size} bytes")
         else:
             print(f"  ✗ Error al subir SLD: HTTP {response.status_code}")
-            print(f"    {response.text}")
+            print(f"    {response.text[:200]}")
             return False
 
         # Pequeña pausa
