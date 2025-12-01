@@ -265,11 +265,18 @@ const AnalysisPanel = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  const handleClose = () => {
+    clearHighlight();
+    setResults(null);
+    setError(null);
+    onClose();
+  };
+
   return (
     <div className="panel analysis-panel">
       <h3>
         🔬 Análisis Espacial
-        <button className="close-btn" onClick={onClose}>×</button>
+        <button className="close-btn" onClick={handleClose}>×</button>
       </h3>
 
       <div className="analysis-form">

@@ -719,19 +719,24 @@ button.tool-pill-btn.btn-pill-clear:hover {
   left: 10px;
   width: 320px;
   max-height: 90vh;
-  background-color: white;
+  background: #f3eeee;
   border-radius: 8px;
   padding: 15px;
   z-index: 2000;
   overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid black;
 }
 
 .analysis-panel h3 {
   margin-top: 0;
-  border-bottom: 1px solid #eee;
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 10px;
+  font-weight: 600;
   padding-bottom: 10px;
+  text-decoration: underline;
+  border-bottom: 1px solid gray;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -742,6 +747,13 @@ button.tool-pill-btn.btn-pill-clear:hover {
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
+  color: #555;
+  padding: 0;
+  line-height: 1;
+}
+
+.analysis-panel .close-btn:hover {
+  color: #d32f2f;
 }
 
 .analysis-form {
