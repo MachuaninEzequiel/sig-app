@@ -296,6 +296,12 @@ export const CONFIG = {
       visible: false,
       category: "Otros",
     },
+    {
+      title: "Nuevos Elementos",
+      name: "nuevos_elementos",
+      visible: false,
+      category: "Otros",
+    },
   ],
 
   editLayer: {
