@@ -116,13 +116,29 @@ const saveToGeoServer = async () => {
       alert("Dibuja algo primero");
       return;
     }
-
+    // 1. PEDIR DATOS AL USUARIO
+    const nombreIngresado = prompt("Ingrese un nombre para este elemento:", "Nuevo Elemento");
+    if (!nombreIngresado) return; // Si cancela, no guardamos
     // Preparamos los features para la transacción
     // Es buena práctica clonarlos para no afectar lo que se ve en el mapa
     const featuresToSave = features.map(f => {
       const clone = f.clone();
       // GeoServer necesita saber el ID, pero al insertar uno nuevo, lo dejamos limpio o null
-      clone.setId(null); 
+      // 1. Obtenemos la geometría MIENTRAS todavía tiene el nombre original
+      const geometry = clone.getGeometry();
+      
+      // Verificamos que exista para evitar errores
+      if (geometry) {          
+          // 3. Cambiamos el nombre de la columna para que coincida con PostGIS
+          clone.setGeometryName('geom'); 
+          
+          // 4. ¡IMPORTANTE! Re-asignamos la geometría al nuevo nombre
+          // Esto mueve los datos internamente a la propiedad correcta ('geom')
+          clone.setGeometry(geometry);
+      }
+
+          clone.set('nombre', nombreIngresado);
+          clone.setId(null);
       return clone;
     });
 
@@ -135,11 +151,11 @@ const saveToGeoServer = async () => {
       null,           // Features a actualizar
       null,           // Features a borrar
       {
-        featureNS: '/geoserver',
+        featureNS: 'tpigis',
         featurePrefix: 'tpigis',
         featureType: "nuevos_elementos",
-        srsName: 'EPSG:4326',
-        gmlOptions: { srsName: 'EPSG:4326' } 
+        srsName: 'EPSG:3857',
+        gmlOptions: { srsName: 'EPSG:3857' } 
       }
     );
 
@@ -149,7 +165,7 @@ const saveToGeoServer = async () => {
 
     // Enviar a GeoServer
     try {
-      const url = '/geoserver/tpigis/ows';
+      const url = '/geoserver/tpigis/wfs';
       
       const response = await fetch(url, {
         method: 'POST',
@@ -509,7 +525,6 @@ const saveToGeoServer = async () => {
           <option value="Point">Punto</option>
           <option value="LineString">Línea</option>
           <option value="Polygon">Polígono</option>
-          <option value="Circle">Círculo</option>
         </select>
 
         {/* BOTÓN DE DIBUJAR */}
