@@ -296,11 +296,17 @@ export const CONFIG = {
       visible: false,
       category: "Otros",
     },
+    {
+      title: "Nuevos Elementos",
+      name: "nuevos_elementos",
+      visible: false,
+      category: "Otros",
+    },
   ],
 
   editLayer: {
-    name: "nuevos_puntos",
+    name: "nuevos_elementos",
     geomField: "geom",
-    featureNS: "http://tpigis",
+    featureNS: "tpigis",
   },
 };

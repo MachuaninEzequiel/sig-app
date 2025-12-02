@@ -247,35 +247,28 @@ Tu frontend necesita una capa especial llamada `nuevos_puntos` para WFS-T (edici
 Conecta a tu base de datos y ejecuta:
 
 ```sql
--- Conectar a la base de datos
--- psql -h localhost -p 5433 -U tpigis -d tpigis
-
 -- Crear tabla para nuevos puntos
-CREATE TABLE public.nuevos_puntos (
+CREATE TABLE public.nuevos_elementos (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(255),
-    geom GEOMETRY(Point, 4326),
+    geom GEOMETRY(Geometry, 4326),
     fecha_creacion TIMESTAMP DEFAULT NOW()
 );
 
 -- Crear índice espacial para mejor performance
-CREATE INDEX idx_nuevos_puntos_geom
-ON public.nuevos_puntos
+CREATE INDEX idx_nuevos_elementos_geom
+ON public.nuevos_elementos
 USING GIST(geom);
-
--- Otorgar permisos
-GRANT ALL ON public.nuevos_puntos TO tpigis;
-GRANT USAGE, SELECT ON SEQUENCE nuevos_puntos_id_seq TO tpigis;
 ```
 
 ### 5.2 Publicar la capa en GeoServer
 
 1. Ve a **Layers** → **Add a new layer**
 2. Store: `tpigis:tpigis_postgis`
-3. Busca `nuevos_puntos` y click **Publish**
+3. Busca `nuevos_elementos` y click **Publish**
 4. Configuración:
-   - **Name**: `nuevos_puntos`
-   - **Title**: Nuevos Puntos (Edición)
+   - **Name**: `nuevos_elementos`
+   - **Title**: Nuevos Elementos (Edición)
    - **Native SRS**: EPSG:4326
    - **Declared SRS**: EPSG:4326
    - Habilita **WFS** (CRÍTICO para edición)
