@@ -10,7 +10,7 @@ import AnalysisPanel from "./components/AnalysisPanel";
 
 
 
-function Nav() {
+function Nav({ editorVisible, setEditorVisible }) {
 
 const [sidebarOpen, setSidebarOpen] = useState(true);
 const [analysisPanelOpen, setAnalysisPanelOpen] = useState(false);
@@ -29,10 +29,12 @@ const analysisPanelRef = useRef(null);
 
         <div className="tools-buttons-row">
             
-            <Tools 
+            <Tools
                 analysisPanelOpen={analysisPanelOpen}
                 onToggleAnalysis={() => setAnalysisPanelOpen(!analysisPanelOpen)}
                 analysisPanelRef={analysisPanelRef}
+                editorVisible={editorVisible}
+                setEditorVisible={setEditorVisible}
             />
         </div>
         <div className="leyersidebar">

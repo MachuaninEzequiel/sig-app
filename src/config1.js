@@ -1,7 +1,7 @@
 // src/config.js
 export const CONFIG = {
   // Configuración del Servidor
-  geoserverUrl: "http://localhost:8080/geoserver",
+  geoserverUrl: "/geoserver", // Usa el proxy de Vite para evitar CORS
   workspace: "tpigis", // Tu workspace real visto en la imagen
 
   // Configuración visual del Mapa (Centrado en Chaco)
@@ -11,6 +11,11 @@ export const CONFIG = {
   // LISTA DE CAPAS WMS (Para ver en el mapa)
   // El campo 'name' es EXACTAMENTE lo que aparece después de "tpigis:" en tu imagen.
   layers: [
+    {
+      title: "Nuevos Elementos",
+      name: "nuevos_elementos",
+      visible: false,
+    },
     {
       title: "Ejido Urbano (Localidades)",
       name: "Ejido",
@@ -258,7 +263,7 @@ export const CONFIG = {
   // Si quieres probar la edición YA MISMO sobre una capa existente (cuidado, ensuciarás datos),
   // cambia 'nuevos_puntos' por 'ActividadesAgropecuarias' o similar.
   editLayer: {
-    name: "nuevos_puntos", // Lo ideal es crear una capa vacía con este nombre
+    name: "nuevos_elementos", // Capa para nuevos elementos
     geomField: "geom", // Nombre de la columna de geometría en PostGIS
     featureNS: "http://tpigis", // El Namespace URI de tu workspace
   },

@@ -11,10 +11,8 @@ import LineString from "ol/geom/LineString";
 import { getLength } from "ol/sphere";
 import { toLonLat } from "ol/proj";
 import { always } from "ol/events/condition";
-import GeoJSON from 'ol/format/GeoJSON';
-import { WFS, GML } from 'ol/format';
 
-const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
+const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef, editorVisible, setEditorVisible }) => {
   const map = useContext(MapContext);
   const [activeTool, setActiveTool] = useState(null);
   const [results, setResults] = useState(null);
@@ -30,8 +28,6 @@ const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
   const betweenPointsRef = useRef([]);
   const betweenClickHandlerRef = useRef(null);
   const pointClickHandlerRef = useRef(null);
-
-  const [drawType, setDrawType] = useState("Polygon"); // Por defecto Polígono
 
   useEffect(() => {
     if (!map) return;
@@ -109,117 +105,9 @@ const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef }) => {
     return `${formattedInt},${decPart} km`;
   };
 
-const saveToGeoServer = async () => {
-    const features = vectorSource.getFeatures();
+  // La funcionalidad de guardado ahora está en el componente Editor
 
-    if (features.length === 0) {
-      alert("Dibuja algo primero");
-      return;
-    }
-    // 1. PEDIR DATOS AL USUARIO
-    const nombreIngresado = prompt("Ingrese un nombre para este elemento:", "Nuevo Elemento");
-    if (!nombreIngresado) return; // Si cancela, no guardamos
-    // Preparamos los features para la transacción
-    // Es buena práctica clonarlos para no afectar lo que se ve en el mapa
-    const featuresToSave = features.map(f => {
-      const clone = f.clone();
-      // GeoServer necesita saber el ID, pero al insertar uno nuevo, lo dejamos limpio o null
-      // 1. Obtenemos la geometría MIENTRAS todavía tiene el nombre original
-      const geometry = clone.getGeometry();
-      
-      // Verificamos que exista para evitar errores
-      if (geometry) {          
-          // 3. Cambiamos el nombre de la columna para que coincida con PostGIS
-          clone.setGeometryName('geom'); 
-          
-          // 4. ¡IMPORTANTE! Re-asignamos la geometría al nuevo nombre
-          // Esto mueve los datos internamente a la propiedad correcta ('geom')
-          clone.setGeometry(geometry);
-      }
-
-          clone.set('nombre', nombreIngresado);
-          clone.setId(null);
-      return clone;
-    });
-
-    // Crear el serializador WFS
-    const formatWFS = new WFS();
-
-    // Generar el XML de transacción (INSERT)
-    const transactionNode = formatWFS.writeTransaction(
-      featuresToSave, // Features a insertar
-      null,           // Features a actualizar
-      null,           // Features a borrar
-      {
-        featureNS: 'tpigis',
-        featurePrefix: 'tpigis',
-        featureType: "nuevos_elementos",
-        srsName: 'EPSG:3857',
-        gmlOptions: { srsName: 'EPSG:3857' } 
-      }
-    );
-
-    // Convertir el nodo XML a string
-    const xmlSerializer = new XMLSerializer();
-    const xmlString = xmlSerializer.serializeToString(transactionNode);
-
-    // Enviar a GeoServer
-    try {
-      const url = '/geoserver/tpigis/wfs';
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        body: xmlString,
-        headers: {
-          'Content-Type': 'text/xml', // GeoServer espera XML
-        },
-      });
-
-      const textResponse = await response.text();
-
-      if (textResponse.includes("TransactionSummary") && !textResponse.includes("Exception")) {
-        alert("¡Dibujo guardado exitosamente en PostGIS!");
-        vectorSource.clear(); // Limpiamos el mapa
-        // Aquí podrías llamar a una función para refrescar la capa WMS principal si la estás visualizando
-      } else {
-        console.error("Error GeoServer:", textResponse);
-        alert("Hubo un error al guardar. Revisa la consola.");
-      }
-    } catch (error) {
-      console.error("Error de red:", error);
-      alert("Error de conexión con GeoServer");
-    }
-  };
-
-  const startDrawing = (type = drawType) => {
-    if (!map) return;
-    
-    // 1. Limpiamos interacciones previas (mediciones, consultas, etc)
-    clearInteractions();
-    
-    // 2. Seteamos el estado visual
-    setActiveTool("draw");
-    setMeasureMode(null);
-    setResults(null); // Opcional: si quieres ocultar resultados previos
-
-    // 3. Creamos la interacción de dibujo de OpenLayers
-    const draw = new Draw({
-      source: vectorSource,
-      type: type, // 'Point', 'LineString', 'Polygon', 'Circle'
-    });
-
-    map.addInteraction(draw);
-    drawRef.current = draw;
-  };
-
-  // Efecto para reiniciar la herramienta si el usuario cambia el tipo de geometría
-  // mientras la herramienta de dibujo está activa
-  useEffect(() => {
-    if (activeTool === "draw" && map) {
-      startDrawing(drawType);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drawType]);
+  // La funcionalidad de dibujo ahora está en el componente Editor
 
 
   const startMeasureFree = () => {
@@ -516,44 +404,21 @@ const saveToGeoServer = async () => {
 
         <div className="tool-pill-separator"></div>
 
-        <select 
-          className="tool-pill-select"
-          value={drawType}
-          onChange={(e) => setDrawType(e.target.value)}
-          title="Tipo de geometría a dibujar"
-        >
-          <option value="Point">Punto</option>
-          <option value="LineString">Línea</option>
-          <option value="Polygon">Polígono</option>
-        </select>
-
-        {/* BOTÓN DE DIBUJAR */}
+        {/* BOTÓN DE EDICIÓN */}
         <button
           onClick={() => {
-            if (activeTool === "draw") {
-              fullReset(); // Si ya está activo, lo apagamos y limpiamos
+            setEditorVisible(!editorVisible);
+            if (editorVisible) {
+              fullReset(); // Si se cierra el editor, limpiar todo
             } else {
-              if (analysisPanelOpen) onToggleAnalysis();
-              startDrawing();
+              if (analysisPanelOpen) onToggleAnalysis(); // Cerrar panel de análisis si está abierto
             }
           }}
-          className={`tool-pill-btn ${activeTool === "draw" ? "active" : ""}`}
-          title="Dibujar figuras libres"
+          className={`tool-pill-btn ${editorVisible ? "active" : ""}`}
+          title="Agregar nuevos elementos al mapa"
         >
-          ✏️ Dibujar
+          ✏️ Edición
         </button>
-
-        <div className="tool-pill-separator"></div>
-
-        {activeTool === 'draw' && vectorSource.getFeatures().length > 0 && (
-          <button
-            onClick={saveToGeoServer}
-            className="tool-pill-btn"
-            style={{ backgroundColor: '#48bb78', color: 'white' }}
-          >
-            💾 Guardar
-          </button>
-        )}
 
         <div className="tool-pill-separator"></div>
 
