@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import { MapContext } from "./Map";
-import { CONFIG } from "../config1";
+import { CONFIG } from "../config";
 import { Draw } from "ol/interaction";
 import { Vector as VectorSource } from "ol/source";
 import { Vector as VectorLayer } from "ol/layer";

@@ -191,79 +191,92 @@ const Tools = ({ analysisPanelOpen, onToggleAnalysis, analysisPanelRef, editorVi
   };
 
   
-  const activatePointInfo = () => {
+const activatePointInfo = () => {
     clearInteractions();
     vectorSource.clear(); // Limpiar elementos anteriores
     setMeasureVal(null); // Limpiar tooltip de mediciones
     setResults(null); // Limpiar resultados anteriores
     setActiveTool("info-point");
-    
-    const handlePointClick = (evt) => {
-      // Agregar marcador visual en el punto clickeado
-      vectorSource.clear();
-      const marker = new Feature({
-        geometry: new Point(evt.coordinate)
-      });
-      vectorSource.addFeature(marker);
 
-      doWmsQuery(evt);
+    const handlePointClick = (evt) => {
+      vectorSource.clear();
+
+      // Dibujar un pequeño marcador en el punto
+      const pointFeature = new Feature({
+        geometry: new Point(evt.coordinate),
+      });
+      vectorSource.addFeature(pointFeature);
+
+      // Generar BBOX alrededor del punto (radio en metros)
+      const radius = 20; // <<< Ajustalo como quieras (metros en EPSG:3857)
+      const x = evt.coordinate[0];
+      const y = evt.coordinate[1];
+
+      const extent = [x - radius, y - radius, x + radius, y + radius];
+
+      queryWFSByPoint(extent);
     };
 
-    pointClickHandlerRef.current = handlePointClick;
     map.on("singleclick", handlePointClick);
+    pointClickHandlerRef.current = handlePointClick;
   };
 
-  const doWmsQuery = async (evt) => {
-      const viewRes = map.getView().getResolution();
-      const visibleLayers = map.getLayers().getArray().filter((l) => l.getVisible() && l.get("name"));
+  const queryWFSByPoint = async (extent) => {
+    if (!map) return;
 
-      if (visibleLayers.length === 0) {
-        setResults([{ layer: "Info", properties: { msg: "Active una capa para consultar" } }]);
-        return;
-      }
+    const visibleLayers = map
+      .getLayers()
+      .getArray()
+      .filter((l) => l.getVisible() && l.get("name"));
 
-      let topLayer = null;
-      for (let i = visibleLayers.length - 1; i >= 0; i--) {
-        const layer = visibleLayers[i];
-        const source = layer.getSource();
-        if (source && typeof source.getGetFeatureInfoUrl === "function") {
-          topLayer = layer;
-          break;
-        }
-      }
+    if (visibleLayers.length === 0) {
+      setResults([{ layer: "Info", properties: { msg: "Active una capa" } }]);
+      return;
+    }
 
-      if (!topLayer) {
-        setResults([{ layer: "Info", properties: { msg: "No hay capas WMS disponibles" } }]);
-        return;
-      }
+    const bbox = extent.join(",");
 
-      const url = topLayer.getSource().getGetFeatureInfoUrl(evt.coordinate, viewRes, "EPSG:3857", {
-          INFO_FORMAT: "application/json",
-          FEATURE_COUNT: 10,
+    try {
+      const allFeaturesPromises = visibleLayers.map(async (layer) => {
+        const layerName = layer.get("name");
+        const layerTitle = layer.get("title") || layerName;
+
+        const url = `${CONFIG.geoserverUrl}/${CONFIG.workspace}/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=${CONFIG.workspace}:${layerName}&count=50&outputFormat=application/json&srsName=urn:ogc:def:crs:EPSG::3857&bbox=${bbox},urn:ogc:def:crs:EPSG::3857`;
+
+        const resp = await fetch(url);
+        if (!resp.ok) return [];
+
+        const data = await resp.json();
+
+        return (data.features || []).map((f) => ({
+          layer: layerTitle,
+          layerName: layerName,
+          properties: f.properties,
+        }));
       });
 
-      if (url) {
-        try {
-          const resp = await fetch(url);
-          const data = await resp.json();
-          if (data.features && data.features.length > 0) {
-            const enhanced = data.features.map((f) => {
-              const geom = f.geometry || null;
-              let coords = null;
-              if (geom && geom.coordinates) {
-                  if (geom.type === "Point") coords = toLonLat(geom.coordinates);
-              }
-              return { layer: topLayer.get("title"), properties: f.properties || {}, geometry: geom, coords };
-            });
-            setResults(enhanced);
-          } else {
-            setResults([{ layer: topLayer.get("title"), properties: { msg: "No se encontraron elementos en este punto" } }]);
-          }
-        } catch (err) {
-          console.error(err);
-          setResults([{ layer: "Error", properties: { msg: "Error al consultar el servidor" } }]);
-        }
+      const allResults = await Promise.all(allFeaturesPromises);
+      const combined = allResults.flat();
+
+      if (combined.length > 0) {
+        setResults(combined);
+      } else {
+        setResults([
+          {
+            layer: "Info",
+            properties: { msg: "No se encontraron elementos en este punto" },
+          },
+        ]);
       }
+    } catch (e) {
+      console.error(e);
+      setResults([
+        {
+          layer: "Error",
+          properties: { msg: "Error al consultar el servidor" },
+        },
+      ]);
+    }
   };
 
   
