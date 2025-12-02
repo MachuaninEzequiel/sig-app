@@ -265,10 +265,10 @@ USING GIST(geom);
 
 1. Ve a **Layers** → **Add a new layer**
 2. Store: `tpigis:tpigis_postgis`
-3. Busca `nuevos_puntos` y click **Publish**
+3. Busca `nuevos_elementos` y click **Publish**
 4. Configuración:
-   - **Name**: `nuevos_puntos`
-   - **Title**: Nuevos Puntos (Edición)
+   - **Name**: `nuevos_elementos`
+   - **Title**: Nuevos Elementos (Edición)
    - **Native SRS**: EPSG:4326
    - **Declared SRS**: EPSG:4326
    - Habilita **WFS** (CRÍTICO para edición)
