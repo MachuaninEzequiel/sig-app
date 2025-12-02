@@ -430,7 +430,7 @@ const activatePointInfo = () => {
           className={`tool-pill-btn ${editorVisible ? "active" : ""}`}
           title="Agregar nuevos elementos al mapa"
         >
-          ✏️ Edición
+          ✏️ Dibujar
         </button>
 
         <div className="tool-pill-separator"></div>

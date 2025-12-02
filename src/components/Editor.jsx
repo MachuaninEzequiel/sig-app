@@ -7,6 +7,7 @@ import { Vector as VectorLayer } from "ol/layer";
 import { Style, Circle, Fill, Stroke } from "ol/style";
 import WFS from "ol/format/WFS";
 import GeoJSON from "ol/format/GeoJSON";
+import "../App.css"
 
 const Editor = ({ onClose }) => {
   const map = useContext(MapContext);
@@ -125,10 +126,10 @@ const Editor = ({ onClose }) => {
           map.getLayers().forEach((layer) => {
             const layerName = layer.get("name");
             if (layerName === CONFIG.editLayer.name) {
-              // Forzar refresh de la capa WMS
+
               const source = layer.getSource();
               if (source && source.updateParams) {
-                // Agregar timestamp para evitar caché
+              
                 source.updateParams({ _t: Date.now() });
               }
             }
@@ -142,7 +143,7 @@ const Editor = ({ onClose }) => {
         alert("❌ Error de conexión con GeoServer.");
       }
 
-      // Limpiar interaction
+      
       map.removeInteraction(draw);
       drawRef.current = null;
       setIsEditing(false);
@@ -164,20 +165,10 @@ const Editor = ({ onClose }) => {
   return (
     <div className="panel editor-panel highlight-panel">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-        <h3 style={{ margin: 0 }}>✏️ Edición</h3>
+        <h3 style={{ margin: 0 }}>✏️ Dibujar </h3>
         <button
           onClick={onClose}
-          style={{
-            background: "transparent",
-            border: "none",
-            fontSize: "1.5rem",
-            cursor: "pointer",
-            color: "#999",
-            padding: "0",
-            width: "30px",
-            height: "30px",
-            lineHeight: "1",
-          }}
+          className="btn-Dibujar"
           title="Cerrar panel de edición"
         >
           ×
@@ -215,7 +206,7 @@ const Editor = ({ onClose }) => {
             style={{
               width: "100%",
               padding: "12px",
-              backgroundColor: "#667eea",
+              backgroundColor: "#627ae4ff",
               color: "white",
               border: "none",
               borderRadius: "4px",
@@ -224,7 +215,7 @@ const Editor = ({ onClose }) => {
               fontSize: "0.95rem",
             }}
           >
-            ➕ Nuevo Elemento
+            + Nuevo Elemento
           </button>
         </>
       ) : (

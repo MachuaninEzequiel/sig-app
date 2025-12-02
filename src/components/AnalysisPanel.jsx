@@ -42,7 +42,7 @@ const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
     }
   };
 
-  // Limpiar highlight cuando se cierra el panel
+  
   useEffect(() => {
     if (!isOpen) {
         clearHighlight();
@@ -51,19 +51,19 @@ const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
     }
   }, [isOpen]);
 
-  // Limpiar al desmontar el componente
+  
   useEffect(() => {
     return () => {
       clearHighlight();
     };
   }, []);
 
-  // Exponer la función clearHighlight al componente padre
+  
   useImperativeHandle(ref, () => ({
     clearHighlight
   }));
 
-  // Cargar opciones disponibles al abrir el panel
+  
   useEffect(() => {
     if (isOpen && availableRutas.length === 0) {
       loadAvailableOptions();
@@ -73,13 +73,13 @@ const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
   const loadAvailableOptions = async () => {
     setLoadingOptions(true);
     try {
-      // Usar count para limitar la consulta inicial y obtener muestras
+      
       const url = `${CONFIG.geoserverUrl}/${CONFIG.workspace}/ows?` +
         `service=WFS&version=2.0.0&request=GetFeature&` +
         `typeNames=${CONFIG.workspace}:RedVial&` +
         `outputFormat=application/json&` +
         `srsName=EPSG:3857&` +
-        `count=3000`; // Limitar para acelerar
+        `count=3000`; 
 
       console.log("Cargando opciones de rutas...");
       const response = await fetch(url);
@@ -88,7 +88,7 @@ const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
       const data = await response.json();
       console.log(`Analizando ${data.features?.length || 0} features...`);
       
-      // Extraer valores únicos de nro_ruta y administra
+      
       const rutasSet = new Set();
       const tiposSet = new Set();
       
@@ -119,7 +119,7 @@ const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
       console.log("✓ Tipos disponibles:", Array.from(tiposSet));
     } catch (err) {
       console.error("Error al cargar opciones:", err);
-      // En caso de error, usar valores por defecto
+      
       setAvailableTipos(['RN', 'RP', 'Municipal', 'Vecinal']);
       setAvailableRutas([]);
     } finally {
@@ -134,7 +134,7 @@ const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
     clearHighlight();
 
     try {
-      // Query WFS - SIN LIMIT para traer todas las features
+      
       const url = `${CONFIG.geoserverUrl}/${CONFIG.workspace}/ows?` +
         `service=WFS&version=2.0.0&request=GetFeature&` +
         `typeNames=${CONFIG.workspace}:RedVial&` +
@@ -157,11 +157,11 @@ const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
         return;
       }
 
-      // Filtrar en el cliente
+      
       console.log(`Total features recibidas: ${data.features.length}`);
       console.log("Buscando:", tipoRuta, rutaNumero);
       
-      // Imprimir algunos ejemplos con nro_ruta
+      
       const withRuta = data.features.filter(f => f.properties && f.properties.nro_ruta);
       console.log(`Features con nro_ruta definido: ${withRuta.length}`);
       if (withRuta.length > 0) {
@@ -171,14 +171,13 @@ const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
       const filteredFeatures = data.features.filter((feature) => {
         const props = feature.properties || {};
         
-        // Los campos son: nro_ruta (puede ser null), nombre (puede ser null), tipo, administra
+        
         const nroRutaStr = String(props.nro_ruta || '').trim();
         const rutaNumeroStr = rutaNumero.trim();
         const nombreStr = String(props.nombre || '').toLowerCase().trim();
         const administraStr = String(props.administra || '').toLowerCase().trim();
         
-        // Para RN buscar "Nacional" en administra
-        // Para RP buscar "Provincial" en administra
+
         let matchTipo = false;
         if (tipoRuta.toUpperCase() === 'RN') {
             matchTipo = administraStr.includes('nacional');
@@ -186,7 +185,7 @@ const AnalysisPanel = forwardRef(({ isOpen, onClose }, ref) => {
             matchTipo = administraStr.includes('provincial');
         }
         
-        // Match por nro_ruta (si existe)
+        
         const matchNumero = nroRutaStr === rutaNumeroStr;
         
         return matchTipo && matchNumero;
