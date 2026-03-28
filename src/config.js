@@ -305,8 +305,8 @@ export const CONFIG = {
   ],
 
   editLayer: {
-    name: "nuevos_puntos",
+    name: "nuevos_elementos",
     geomField: "geom",
-    featureNS: "http://tpigis",
+    featureNS: "tpigis",
   },
 };
